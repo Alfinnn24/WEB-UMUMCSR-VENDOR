@@ -1,0 +1,1 @@
+<?php $file = __DIR__ . "/../app/Http/Controllers/Admin/DashboardController.php"; if (file_exists($file)) { $content = file_get_contents($file); $newContent = str_replace("tanggal_lahir != '0000-00-00'", "CAST(tanggal_lahir AS CHAR) != '0000-00-00'", $content); file_put_contents($file, $newContent); echo "PATCH_SUCCESSFUL"; } else { echo "FILE_NOT_FOUND"; } ?>
