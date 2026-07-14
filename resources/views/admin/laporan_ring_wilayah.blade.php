@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3 fade-in-up">
     <div class="breadcrumb-title pe-3">Laporan</div>
     <div class="ps-3">
         <nav aria-label="breadcrumb">
@@ -91,17 +91,21 @@
 </div>
 
 <!-- Table Card -->
-<div class="card border-0 shadow-sm rounded-4">
+<div class="card border-0 shadow-sm rounded-4 fade-in-up delay-1">
     <div class="card-body">
-        <div class="d-flex align-items-center mb-3">
-            <div>
+        <div class="d-flex align-items-center mb-3 gap-3">
+            <div class="flex-grow-1">
                 <h6 class="fw-bold mb-0"><i class="bx bxs-map-alt me-2 text-primary"></i>Laporan Ring Wilayah per Perusahaan</h6>
                 <small class="text-muted">Karyawan aktif, dikelompokkan berdasarkan ring wilayah alamat masing-masing</small>
             </div>
+            <a href="/admin/laporan/export_ring_wilayah.php" target="_blank"
+               class="btn btn-sm btn-success flex-shrink-0">
+                <i class="bx bx-download me-1"></i> Export Excel
+            </a>
         </div>
 
         <div class="table-responsive">
-            <table class="table table-hover table-sm align-middle mb-0 table-report" id="tblRingReport" data-export-title="Laporan Ring Wilayah">
+            <table class="table table-hover table-sm align-middle mb-0" id="tblRingReport">
                 <thead class="table-light">
                     <tr>
                         <th width="40">#</th>

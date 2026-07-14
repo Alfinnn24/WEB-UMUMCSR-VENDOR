@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3 fade-in-up">
     <div class="breadcrumb-title pe-3">Statistik</div>
     <div class="ps-3">
         <nav aria-label="breadcrumb">
@@ -12,7 +12,7 @@
 </div>
 
 <!-- Filter Card -->
-<div class="card border-0 shadow-sm rounded-4 mb-4">
+<div class="card border-0 shadow-sm rounded-4 mb-4 fade-in-up delay-1">
     <div class="card-body">
         <h6 class="fw-bold mb-3"><i class="bx bx-filter-alt me-2 text-primary"></i>Filter Statistik Kontrak Kerja</h6>
         <form id="filterKontrakForm" method="GET" action="{{ route('admin.dashboard') }}">
@@ -154,7 +154,7 @@
 </div>
 
 <!-- Data Listing Card -->
-<div class="card border-0 shadow-sm rounded-4">
+<div class="card border-0 shadow-sm rounded-4 fade-in-up delay-2">
     <div class="card-body">
         <div class="d-flex align-items-center mb-3">
             <div>
@@ -165,7 +165,7 @@
         
         <div class="table-responsive">
             <table class="table table-hover table-sm align-middle mb-0" id="kontrakTable">
-                <thead class="table-light">
+                <thead class="table-dark">
                     <tr>
                         <th width="35">#</th>
                         <th>Perusahaan</th>

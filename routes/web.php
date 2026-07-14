@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\InformasiController;
 
 use App\Http\Controllers\Admin\RingWilayahController;
 use App\Http\Controllers\Admin\TemuanAuditController;
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 
 // ─── Root redirect ───────────────────────────────────────────────────────────
 Route::get('/', function () {
@@ -26,6 +27,8 @@ Route::get('/', function () {
 Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
 // ─── Admin area ──────────────────────────────────────────────────────────────
 Route::prefix('admin')->middleware('admin')->name('admin.')->group(function () {
@@ -53,6 +56,14 @@ Route::prefix('admin')->middleware('admin')->name('admin.')->group(function () {
     Route::get('/laporan/export_ring_detail.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportRingDetail']);
     Route::get('/laporan/export_ring_wilayah.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportRingWilayah']);
     Route::get('/laporan/export_karyawan_kontrak.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportKaryawanKontrak']);
+    Route::get('/laporan/export_karyawan.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportKaryawan']);
+    Route::get('/laporan/export_sertifikasi.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportSertifikasi']);
+    Route::get('/laporan/export_tenaga_kerja.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportTenagaKerja']);
+    Route::get('/laporan/export_kontrak.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportKontrak']);
+
+    // ── Profile ──
+    Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile.index');
+    Route::post('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
 
     // ── Modul yang akan ditambah di Modul 3+ ──
     // dst...
@@ -85,6 +96,8 @@ Route::prefix('perusahaan')->middleware('perusahaan')->name('perusahaan.')->grou
 
     // Kontrak Kerja CRUD
     Route::post('/kontrak-kerja/{id}/upload', [App\Http\Controllers\Perusahaan\KontrakKerjaController::class, 'upload'])->name('kontrak-kerja.upload');
+    Route::get('/kontrak-kerja/{id}/karyawan', [App\Http\Controllers\Perusahaan\KontrakKerjaController::class, 'karyawan'])->name('kontrak-kerja.karyawan');
+    Route::post('/kontrak-kerja/{id}/karyawan', [App\Http\Controllers\Perusahaan\KontrakKerjaController::class, 'storeKaryawan'])->name('kontrak-kerja.karyawan.store');
     Route::resource('kontrak-kerja', App\Http\Controllers\Perusahaan\KontrakKerjaController::class);
 
     // Data Sertifikasi CRUD

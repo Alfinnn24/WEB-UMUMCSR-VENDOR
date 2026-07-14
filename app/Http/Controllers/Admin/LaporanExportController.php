@@ -167,6 +167,157 @@ class LaporanExportController extends Controller
             ->header('Cache-Control', 'max-age=0');
     }
 
+    public function exportKaryawan(Request $request)
+    {
+        $filter_perusahaan = (int)$request->query('perusahaan_id', 0);
+        $filter_status     = trim($request->query('status', ''));
+        $filter_jk         = trim($request->query('jk', ''));
+        $filter_unit       = trim($request->query('unit', ''));
+
+        $query = DB::table('karyawan as k')
+            ->leftJoin('users as u', 'k.perusahaan_id', '=', 'u.id')
+            ->leftJoin('divisions as d', 'k.div_id', '=', 'd.id')
+            ->leftJoin('subdivisions as sd', 'k.subdiv_id', '=', 'sd.id')
+            ->select('k.*', 'u.nama as nama_perusahaan', 'd.div_desc as divisi', 'sd.subdiv_desc as subdivisi');
+
+        if ($filter_perusahaan) {
+            $query->where('k.perusahaan_id', $filter_perusahaan);
+        }
+        if ($filter_status) {
+            $query->where('k.status', $filter_status);
+        }
+        if ($filter_jk) {
+            $query->where('k.jenis_kelamin', $filter_jk);
+        }
+        if ($filter_unit) {
+            $query->where('k.unit', $filter_unit);
+        }
+
+        $rows = $query->orderBy('u.nama')->orderBy('k.nama')->get();
+
+        $filename = 'Laporan_DataKaryawan_' . date('Ymd_His') . '.xls';
+        $output = view('admin.exports.karyawan', compact('rows'))->render();
+
+        return response($output)
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
+    public function exportSertifikasi(Request $request)
+    {
+        $filter_perusahaan = (int)$request->query('perusahaan_id', 0);
+        $filter_status     = trim($request->query('status', ''));
+        $filter_tahun      = (int)$request->query('tahun', 0);
+
+        $today = now()->toDateString();
+        $tgl_30 = now()->addDays(30)->toDateString();
+
+        $query = DB::table('sertifikasi_karyawan as s')
+            ->leftJoin('karyawan as k', 's.karyawan_id', '=', 'k.id')
+            ->leftJoin('users as u', 's.perusahaan_id', '=', 'u.id')
+            ->select('s.*', 'k.nama as nama_karyawan', 'k.nik', 'u.nama as nama_perusahaan',
+                DB::raw("DATEDIFF(s.tanggal_expired, '$today') as sisa_hari"));
+
+        if ($filter_perusahaan) {
+            $query->where('s.perusahaan_id', $filter_perusahaan);
+        }
+        if ($filter_tahun) {
+            $query->whereYear('s.tanggal_sertifikasi', $filter_tahun);
+        }
+        if ($filter_status === 'aktif') {
+            $query->where('s.tanggal_expired', '>', $tgl_30);
+        } elseif ($filter_status === 'hampir') {
+            $query->where('s.tanggal_expired', '>', $today)->where('s.tanggal_expired', '<=', $tgl_30);
+        } elseif ($filter_status === 'expired') {
+            $query->where('s.tanggal_expired', '<=', $today);
+        }
+
+        $rows = $query->orderBy('u.nama')->orderBy('k.nama')->get();
+
+        $filename = 'Laporan_Sertifikasi_' . date('Ymd_His') . '.xls';
+        $output = view('admin.exports.sertifikasi', compact('rows'))->render();
+
+        return response($output)
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
+    public function exportTenagaKerja(Request $request)
+    {
+        $filter_perusahaan = (int)$request->query('perusahaan_id', 0);
+        $filter_tahun      = (int)$request->query('tahun', date('Y'));
+
+        $query = DB::table('users as u')
+            ->leftJoin('laporan_tenaga_kerja as l', function($join) use ($filter_tahun) {
+                $join->on('u.id', '=', 'l.perusahaan_id')
+                     ->whereYear('l.tgl_laporan', $filter_tahun);
+            })
+            ->where('u.role', 'perusahaan');
+
+        if ($filter_perusahaan) {
+            $query->where('u.id', $filter_perusahaan);
+        }
+
+        $raw = $query->select('u.id as perusahaan_id', 'u.nama as nama_perusahaan', 'l.id as laporan_id', 'l.nomor_surat', 'l.tgl_laporan', 'l.file_laporan')
+            ->orderBy('u.nama')
+            ->orderByDesc('l.tgl_laporan')
+            ->get();
+
+        $rows = [];
+        foreach ($raw as $r) {
+            $r->status_upload = empty($r->file_laporan) ? 'Belum Upload' : 'Sudah Upload';
+            $rows[] = $r;
+        }
+
+        $filename = 'Laporan_TenagaKerja_' . date('Ymd_His') . '.xls';
+        $output = view('admin.exports.tenaga_kerja', compact('rows', 'filter_tahun'))->render();
+
+        return response($output)
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
+    public function exportKontrak(Request $request)
+    {
+        $filter_perusahaan = (int)$request->query('perusahaan_id', 0);
+        $filter_status     = trim($request->query('status', ''));
+
+        $today = now()->toDateString();
+        $tgl_30 = now()->addDays(30)->toDateString();
+
+        $query = DB::table('kontrak_kerja as k')
+            ->leftJoin('users as u', 'k.perusahaan_id', '=', 'u.id')
+            ->select('k.*', 'u.nama as nama_perusahaan',
+                DB::raw("DATEDIFF(k.tgl_selesai, '$today') as sisa_hari"),
+                DB::raw("IF(k.berkas_kontrak IS NOT NULL AND k.berkas_kontrak != '', 'Ada', 'Belum') as status_berkas"),
+                DB::raw("(SELECT COUNT(*) FROM kontrak_karyawan kk WHERE kk.kontrak_id = k.id) as jml_assigned"));
+
+        if ($filter_perusahaan) {
+            $query->where('k.perusahaan_id', $filter_perusahaan);
+        }
+
+        if ($filter_status === 'aktif') {
+            $query->where('k.tgl_mulai', '<=', $today)->where('k.tgl_selesai', '>=', $today)->where('k.tgl_selesai', '>', $tgl_30);
+        } elseif ($filter_status === 'hampir') {
+            $query->where('k.tgl_selesai', '>', $today)->where('k.tgl_selesai', '<=', $tgl_30);
+        } elseif ($filter_status === 'selesai') {
+            $query->where('k.tgl_selesai', '<', $today);
+        }
+
+        $rows = $query->orderBy('u.nama')->orderBy('k.tgl_mulai')->get();
+
+        $filename = 'Laporan_Kontrak_' . date('Ymd_His') . '.xls';
+        $output = view('admin.exports.kontrak', compact('rows'))->render();
+
+        return response($output)
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
     public function exportKaryawanKontrak(Request $request)
     {
         $kontrak_id = (int)$request->query('kontrak_id', 0);

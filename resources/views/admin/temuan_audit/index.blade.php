@@ -77,7 +77,7 @@ Manajemen Temuan Audit CRUD dengan Modal AJAX & Filter (Tanpa Reload)
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label small text-muted fw-semibold mb-1">Perusahaan</label>
-                    <select name="perusahaan_id" class="form-select">
+                    <select name="perusahaan_id" class="form-select form-select-sm">
                         <option value="">— Semua Perusahaan —</option>
                         @foreach($companies as $p)
                             <option value="{{ $p->id }}" {{ ($filters['perusahaan_id'] ?? '') == $p->id ? 'selected' : '' }}>
@@ -88,7 +88,7 @@ Manajemen Temuan Audit CRUD dengan Modal AJAX & Filter (Tanpa Reload)
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small text-muted fw-semibold mb-1">Tahun Audit</label>
-                    <select name="tahun" class="form-select">
+                    <select name="tahun" class="form-select form-select-sm">
                         <option value="">— Semua Tahun —</option>
                         @foreach($years as $thn)
                             <option value="{{ $thn }}" {{ ($filters['tahun'] ?? '') == $thn ? 'selected' : '' }}>
@@ -99,17 +99,17 @@ Manajemen Temuan Audit CRUD dengan Modal AJAX & Filter (Tanpa Reload)
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small text-muted fw-semibold mb-1">Status</label>
-                    <select name="status" class="form-select">
+                    <select name="status" class="form-select form-select-sm">
                         <option value="">— Semua Status —</option>
                         <option value="Open" {{ ($filters['status'] ?? '') === 'Open' ? 'selected' : '' }}>Open</option>
                         <option value="Close" {{ ($filters['status'] ?? '') === 'Close' ? 'selected' : '' }}>Close</option>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                <div class="col-md-3 d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-sm btn-primary flex-fill">
                         <i class="bx bx-filter-alt me-1"></i> Filter
                     </button>
-                    <button type="button" class="btn btn-outline-secondary w-100 fw-semibold btn-reset-filter">
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-reset-filter">
                         <i class="bx bx-reset me-1"></i> Reset
                     </button>
                 </div>
@@ -157,7 +157,7 @@ Manajemen Temuan Audit CRUD dengan Modal AJAX & Filter (Tanpa Reload)
                                 @endif
                             </td>
                             <td class="text-center">
-                                <span class="badge rounded-pill px-3 py-2 bg-{{ $row->status === 'Open' ? 'danger' : 'success' }}">
+                                <span class="badge badge-sm rounded-pill bg-{{ $row->status === 'Open' ? 'danger' : 'success' }}">
                                     {{ $row->status }}
                                 </span>
                             </td>

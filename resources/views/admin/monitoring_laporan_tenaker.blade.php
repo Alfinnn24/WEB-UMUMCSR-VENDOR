@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3 fade-in-up">
     <div class="breadcrumb-title pe-3">Statistik</div>
     <div class="ps-3">
         <nav aria-label="breadcrumb">
@@ -12,7 +12,7 @@
 </div>
 
 <!-- Filter Card -->
-<div class="card border-0 shadow-sm rounded-4 mb-4">
+<div class="card border-0 shadow-sm rounded-4 mb-4 fade-in-up delay-1">
     <div class="card-body">
         <h6 class="fw-bold mb-3"><i class="bx bx-filter-alt me-2 text-primary"></i>Filter Statistik Tenaga Kerja</h6>
         <form id="filterLaporanTenakerForm" method="GET" action="{{ route('admin.dashboard') }}">
@@ -141,7 +141,7 @@
 </div>
 
 <!-- Data Listing Card -->
-<div class="card border-0 shadow-sm rounded-4">
+<div class="card border-0 shadow-sm rounded-4 fade-in-up delay-2">
     <div class="card-body">
         <div class="d-flex align-items-center mb-3">
             <div>
@@ -152,7 +152,7 @@
         
         <div class="table-responsive">
             <table class="table table-hover table-sm align-middle mb-0" id="laporanTenakerTable">
-                <thead class="table-light">
+                <thead class="table-dark">
                     <tr>
                         <th width="35">#</th>
                         <th>Perusahaan</th>
@@ -174,9 +174,9 @@
                         <td><small>{{ $r->tgl_laporan ? date('d/m/Y', strtotime($r->tgl_laporan)) : '-' }}</small></td>
                         <td>
                             @if ($has_file)
-                                <span class="badge bg-success rounded-pill px-2" style="font-size: .7rem;">Sudah Upload</span>
+                                <span class="badge bg-success badge-xs rounded-pill">Sudah Upload</span>
                             @else
-                                <span class="badge bg-danger rounded-pill px-2" style="font-size: .7rem;">Belum Upload</span>
+                                <span class="badge bg-danger badge-xs rounded-pill">Belum Upload</span>
                             @endif
                         </td>
                         <td>

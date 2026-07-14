@@ -39,7 +39,7 @@ Ring Wilayah CRUD — HTML saja, TANPA <script>
                         <!-- Pilih Ring -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Ring <span class="text-danger">*</span></label>
-                            <div class="d-flex gap-3">
+                            <div class="d-flex gap-2 flex-wrap">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="ring" id="ring1" value="Ring 1" required>
                                     <label class="form-check-label" for="ring1">Ring 1</label>
@@ -47,6 +47,14 @@ Ring Wilayah CRUD — HTML saja, TANPA <script>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="ring" id="ring2" value="Ring 2">
                                     <label class="form-check-label" for="ring2">Ring 2</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="ring" id="ring3" value="Ring 3">
+                                    <label class="form-check-label" for="ring3">Ring 3</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="ring" id="ring4" value="Ring 4">
+                                    <label class="form-check-label" for="ring4">Ring 4</label>
                                 </div>
                             </div>
                         </div>
@@ -100,22 +108,28 @@ Ring Wilayah CRUD — HTML saja, TANPA <script>
 
         <!-- Info Ringkasan -->
         @php
-            $total_r1 = $ring_wilayah->where('ring', 'Ring 1')->count();
-            $total_r2 = $ring_wilayah->where('ring', 'Ring 2')->count();
+            $ring_counts = [
+                'Ring 1' => $ring_wilayah->where('ring', 'Ring 1')->count(),
+                'Ring 2' => $ring_wilayah->where('ring', 'Ring 2')->count(),
+                'Ring 3' => $ring_wilayah->where('ring', 'Ring 3')->count(),
+                'Ring 4' => $ring_wilayah->where('ring', 'Ring 4')->count(),
+            ];
+            $ring_label_bg = [
+                'Ring 1' => '#198754',
+                'Ring 2' => '#0dcaf0',
+                'Ring 3' => '#ffc107',
+                'Ring 4' => '#6c757d',
+            ];
         @endphp
         <div class="row g-2 mt-1">
-            <div class="col-6">
-                <div class="card border text-center py-2" style="background:#f8f9fa">
-                    <div class="fs-4 fw-bold text-dark">{{ $total_r1 }}</div>
-                    <div class="small text-body-secondary" style="font-size: .7rem;">Ring 1</div>
+            @foreach($ring_counts as $label => $count)
+            <div class="col-6 col-md-3">
+                <div class="card border text-center py-2" style="background:#f8f9fa;border-left:3px solid {{ $ring_label_bg[$label] }}!important;">
+                    <div class="fs-4 fw-bold text-dark">{{ $count }}</div>
+                    <div class="small text-body-secondary" style="font-size:.7rem;">{{ $label }}</div>
                 </div>
             </div>
-            <div class="col-6">
-                <div class="card border text-center py-2" style="background:#f8f9fa">
-                    <div class="fs-4 fw-bold text-dark">{{ $total_r2 }}</div>
-                    <div class="small text-body-secondary" style="font-size: .7rem;">Ring 2</div>
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 
@@ -133,12 +147,11 @@ Ring Wilayah CRUD — HTML saja, TANPA <script>
                     <li class="nav-item">
                         <a class="nav-link active btn-filter-ring" href="#" data-ring="semua">Semua</a>
                     </li>
+                    @foreach(['Ring 1','Ring 2','Ring 3','Ring 4'] as $r)
                     <li class="nav-item">
-                        <a class="nav-link btn-filter-ring" href="#" data-ring="Ring 1">Ring 1</a>
+                        <a class="nav-link btn-filter-ring" href="#" data-ring="{{ $r }}">{{ $r }}</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn-filter-ring" href="#" data-ring="Ring 2">Ring 2</a>
-                    </li>
+                    @endforeach
                 </ul>
 
                 <div class="table-responsive">
@@ -168,9 +181,16 @@ Ring Wilayah CRUD — HTML saja, TANPA <script>
                                 <tr data-ring="{{ $row->ring }}">
                                     <td>{{ $idx + 1 }}</td>
                                     <td>
-                                        <span class="badge {{ $row->ring === 'Ring 1' ? 'bg-success' : 'bg-info' }} px-2">
-                                            {{ $row->ring }}
-                                        </span>
+                                        @php
+                                            $ringCls = match($row->ring) {
+                                                'Ring 1' => 'bg-success',
+                                                'Ring 2' => 'bg-info',
+                                                'Ring 3' => 'bg-warning text-dark',
+                                                'Ring 4' => 'bg-secondary',
+                                                default  => 'bg-info',
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $ringCls }} px-2">{{ $row->ring }}</span>
                                     </td>
                                     <td>{{ $row->provinsi }}</td>
                                     <td>{{ $row->kabupaten }}</td>

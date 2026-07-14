@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -48,6 +49,12 @@ class DashboardController extends Controller
             $data = $this->getLaporanRingWilayahData($request);
             $view = 'admin.laporan_ring_wilayah';
             $title = 'Laporan Ring Wilayah';
+        } elseif ($page === 'profile') {
+            if ($request->ajax()) {
+                $user = DB::table('users')->where('id', session('user_id'))->first();
+                return view('admin.profile', ['user' => $user]);
+            }
+            return redirect()->route('admin.profile.index');
         } else {
             $data = [];
             $view = 'admin.' . $page;
@@ -75,7 +82,7 @@ class DashboardController extends Controller
         $today  = now()->toDateString();
         $tgl30  = now()->addDays(30)->toDateString();
 
-        // Statistik perusahaan & karyawan
+        // Statistik cepat (tanpa cache — selalu real-time)
         $total_perusahaan = DB::table('users')->where('role', 'perusahaan')->count();
         $total_karyawan   = DB::table('karyawan')->count();
         $total_aktif      = DB::table('karyawan')->where('status', 'Aktif')->count();
@@ -88,47 +95,79 @@ class DashboardController extends Controller
         $total_laki      = (int)($gender->laki ?? 0);
         $total_perempuan = (int)($gender->perempuan ?? 0);
 
-        // Temuan audit
         $total_temuan = DB::table('temuan_audit')->count();
         $temuan_open  = DB::table('temuan_audit')->where('status', 'Open')->count();
 
-        // Karyawan per Ring Wilayah
-        $karyawan_ring1 = $this->countRing('Ring 1');
-        $karyawan_ring2 = $this->countRing('Ring 2');
-        $karyawan_ring3 = $this->countRing('Ring 3');
-        $karyawan_ring4 = $this->countRing('Ring 4');
+        // Ring wilayah — 1 query GROUP BY + 1 query NOT EXISTS (cache 5 mnt)
+        $ringData = Cache::remember('dashboard_ring_counts', 300, function () {
+            $grouped = DB::select("
+                SELECT r.ring, COUNT(DISTINCT k.id) AS jumlah
+                FROM karyawan k
+                INNER JOIN ring_wilayah r
+                    ON TRIM(r.provinsi)  = TRIM(k.provinsi)
+                   AND TRIM(r.kabupaten) = TRIM(k.kabupaten)
+                   AND TRIM(r.kecamatan) = TRIM(k.kecamatan)
+                   AND TRIM(r.desa)      = TRIM(k.desa)
+                WHERE k.status = 'Aktif'
+                GROUP BY r.ring
+            ");
+            $map = ['Ring 1' => 0, 'Ring 2' => 0, 'Ring 3' => 0, 'Ring 4' => 0];
+            foreach ($grouped as $row) {
+                $map[$row->ring] = (int)$row->jumlah;
+            }
 
-        // Karyawan aktif tidak terpetakan di ring manapun
-        $karyawan_tanpa_ring = DB::select("
-            SELECT COUNT(*) as n FROM karyawan k
-            WHERE k.status = 'Aktif'
-            AND NOT EXISTS (
-                SELECT 1 FROM ring_wilayah r
-                WHERE r.provinsi  = k.provinsi
-                  AND r.kabupaten = k.kabupaten
-                  AND r.kecamatan = k.kecamatan
-                  AND r.desa      = k.desa
-            )
-        ")[0]->n ?? 0;
+            $tanpa_ring = DB::select("
+                SELECT COUNT(*) AS n FROM karyawan k
+                WHERE k.status = 'Aktif'
+                AND NOT EXISTS (
+                    SELECT 1 FROM ring_wilayah r
+                    WHERE TRIM(r.provinsi)  = TRIM(k.provinsi)
+                      AND TRIM(r.kabupaten) = TRIM(k.kabupaten)
+                      AND TRIM(r.kecamatan) = TRIM(k.kecamatan)
+                      AND TRIM(r.desa)      = TRIM(k.desa)
+                )
+            ")[0]->n ?? 0;
 
-        // Distribusi divisi
-        $distribusi_divisi = DB::table('karyawan as k')
-            ->join('divisions as d', 'k.div_id', '=', 'd.id')
-            ->where('k.status', 'Aktif')
-            ->selectRaw('d.div_desc, COUNT(*) as jumlah')
-            ->groupBy('k.div_id', 'd.div_desc')
-            ->orderByDesc('jumlah')
-            ->get();
+            return [$map, (int)$tanpa_ring];
+        });
 
-        // Distribusi unit
-        $distribusi_unit = DB::table('karyawan')
-            ->where('status', 'Aktif')
-            ->selectRaw('unit, COUNT(*) as jumlah')
-            ->groupBy('unit')
-            ->orderByDesc('jumlah')
-            ->get();
+        [$ringMap, $karyawan_tanpa_ring] = $ringData;
+        $karyawan_ring1 = $ringMap['Ring 1'];
+        $karyawan_ring2 = $ringMap['Ring 2'];
+        $karyawan_ring3 = $ringMap['Ring 3'];
+        $karyawan_ring4 = $ringMap['Ring 4'];
 
-        // Distribusi usia
+        // Distribusi (cache 5 mnt — data jarang berubah)
+        $distCache = Cache::remember('dashboard_distribusi', 300, function () {
+            $divisi = DB::table('karyawan as k')
+                ->join('divisions as d', 'k.div_id', '=', 'd.id')
+                ->where('k.status', 'Aktif')
+                ->selectRaw('d.div_desc, COUNT(*) as jumlah')
+                ->groupBy('k.div_id', 'd.div_desc')
+                ->orderByDesc('jumlah')
+                ->get();
+
+            $unit = DB::table('karyawan')
+                ->where('status', 'Aktif')
+                ->selectRaw('unit, COUNT(*) as jumlah')
+                ->groupBy('unit')
+                ->orderByDesc('jumlah')
+                ->get();
+
+            $pendidikan = DB::table('karyawan')
+                ->selectRaw('pendidikan_terakhir, COUNT(*) as jumlah')
+                ->groupBy('pendidikan_terakhir')
+                ->orderByDesc('jumlah')
+                ->get();
+
+            return [$divisi, $unit, $pendidikan];
+        });
+
+        $distribusi_divisi     = $distCache[0];
+        $distribusi_unit       = $distCache[1];
+        $distribusi_pendidikan = $distCache[2];
+
+        // Usia
         $usia = DB::select("
             SELECT
                 SUM(CASE WHEN age < 25 THEN 1 ELSE 0 END)              AS age1,
@@ -168,26 +207,8 @@ class DashboardController extends Controller
             'total_laki','total_perempuan',
             'total_temuan','temuan_open',
             'karyawan_ring1','karyawan_ring2','karyawan_ring3','karyawan_ring4','karyawan_tanpa_ring',
-            'distribusi_divisi','distribusi_unit','usia_data','karyawan_baru'
+            'distribusi_divisi','distribusi_unit','distribusi_pendidikan','usia_data','karyawan_baru'
         );
-    }
-
-    // ─── Helper hitung karyawan aktif dalam ring tertentu ──────────────
-    private function countRing(string $ring): int
-    {
-        $result = DB::select("
-            SELECT COUNT(DISTINCT k.id) AS n
-            FROM karyawan k
-            INNER JOIN ring_wilayah r
-                ON r.ring = ?
-                AND TRIM(r.provinsi)  = TRIM(k.provinsi)
-                AND TRIM(r.kabupaten) = TRIM(k.kabupaten)
-                AND TRIM(r.kecamatan) = TRIM(k.kecamatan)
-                AND TRIM(r.desa)      = TRIM(k.desa)
-            WHERE k.status = 'Aktif'
-        ", [$ring]);
-
-        return (int)($result[0]->n ?? 0);
     }
 
     // ─── MODUL 5: MONITORING DATA HELPERS ────────────────────────────────

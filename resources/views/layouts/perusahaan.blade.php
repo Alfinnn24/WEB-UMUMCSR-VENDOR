@@ -70,7 +70,7 @@
                         <li><a href="{{ route('perusahaan.karyawan.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.karyawan.index') }}" data-title="Data Karyawan"><i class="bx bxs-group"></i>Data Karyawan</a></li>
                         <li><a href="{{ route('perusahaan.kontrak-kerja.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.kontrak-kerja.index') }}" data-title="Kontrak Kerja"><i class="bx bxs-file-blank"></i>Kontrak Kerja</a></li>
                         <li><a href="{{ route('perusahaan.sertifikasi.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.sertifikasi.index') }}" data-title="Data Sertifikasi"><i class="bx bxs-tree"></i>Data Sertifikasi</a></li>
-                        <li><a href="{{ route('perusahaan.laporan-tenaga-kerja') }}" class="nav-ajax" data-url="{{ route('perusahaan.laporan-tenaga-kerja') }}" data-title="Laporan Tenaga Kerja"><i class="bx bxs-group"></i>Laporan Tenaga Kerja</a></li>
+                        <li><a href="{{ route('perusahaan.laporan-tenaga-kerja.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.laporan-tenaga-kerja.index') }}" data-title="Laporan Tenaga Kerja"><i class="bx bxs-group"></i>Laporan Tenaga Kerja</a></li>
                     </ul>
                 </li>
                 <li class="menu-label">Informasi</li>
@@ -144,410 +144,379 @@
     <script src="/assets/js/app_baru.js?v=3"></script>
 
     <script>
-    $(function(){
-        // Setup CSRF and AJAX headers
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'X-Requested-With': 'XMLHttpRequest'
+        $(function () {
+
+            // ── Setup CSRF & AJAX headers ──────────────────────────────
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            // ── Fungsi load halaman via AJAX ────────────────────────────
+            function ajaxLoadPage(url, pageTitle, pushHistory) {
+                var $loader = $('#ajax-loader');
+                var $content = $('#page-content');
+
+                $loader.show();
+                $content.addClass('ajax-fading');
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (html) {
+                        setTimeout(function () {
+                            $content.html(html);
+
+                            if (pageTitle) {
+                                document.title = pageTitle + ' - Portal Perusahaan';
+                            }
+
+                            if (pushHistory !== false) {
+                                history.pushState({ url: url, title: pageTitle }, pageTitle, url);
+                            }
+
+                            $content.removeClass('ajax-fading');
+                            $('.page-wrapper').animate({ scrollTop: 0 }, 150);
+
+                            reinitDataTables();
+                            reinitCharts();
+                            highlightActiveMenu(url);
+
+                            $loader.hide();
+                        }, 180);
+                    },
+                    error: function (xhr) {
+                        $content.html(
+                            '<div class="alert alert-danger m-4">' +
+                            '<i class="bx bx-error-circle me-2"></i>' +
+                            'Gagal memuat halaman (' + xhr.status + '). Coba refresh atau hubungi Admin.' +
+                            '</div>'
+                        );
+                        $content.removeClass('ajax-fading');
+                        $loader.hide();
+                    }
+                });
             }
-        });
 
-        // Page loader function
-        function ajaxLoadPage(url,title,push){
-            var $l=$('#ajax-loader'),$c=$('#page-content');
-            $l.show();$c.addClass('ajax-fading');
-            $.ajax({url:url,type:'GET',
-                success:function(html){setTimeout(function(){$c.html(html);if(title)document.title=title+' - Portal Perusahaan';if(push!==false)history.pushState({url:url,title:title},title,url);$c.removeClass('ajax-fading');$('.page-wrapper').animate({scrollTop:0},150);document.dispatchEvent(new CustomEvent('ajaxPageLoaded'));highlightActiveMenu(url);$l.hide()},180)},
-                error:function(xhr){$c.html('<div class="alert alert-danger m-4"><i class="bx bx-error-circle me-2"></i>Gagal memuat ('+xhr.status+').</div>');$c.removeClass('ajax-fading');$l.hide()}
+            // ── Event: klik link sidebar / header ───────────────────────
+            $(document).on('click', 'a.nav-ajax', function (e) {
+                e.preventDefault();
+                const url = $(this).data('url') || $(this).attr('href');
+                const pageTitle = $(this).data('title') || '';
+                if (!url || url === '#' || url === 'javascript:;') return;
+                ajaxLoadPage(url, pageTitle, true);
             });
-        }
 
-        // Navigation click handler
-        $(document).on('click','a.nav-ajax',function(e){e.preventDefault();var u=$(this).data('url')||$(this).attr('href'),t=$(this).data('title')||'';if(!u||u==='#')return;ajaxLoadPage(u,t,true)});
-        window.addEventListener('popstate',function(e){if(e.state&&e.state.url)ajaxLoadPage(e.state.url,e.state.title,false)});
-        history.replaceState({url:window.location.href,title:document.title},document.title,window.location.href);
-
-        // Highlight active menu
-        function highlightActiveMenu(url){$('.metismenu a').removeClass('nav-link-active');$('.metismenu a.nav-ajax').each(function(){var l=$(this).data('url')||$(this).attr('href');if(l&&url.includes(l))$(this).addClass('nav-link-active')});}
-        highlightActiveMenu(window.location.href);
-
-        // Profile Form AJAX Submission
-        $(document).on('submit', '#updateProfileForm', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            var btn = form.find('button[type="submit"]');
-            btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: form.serialize(),
-                success: function(res) {
-                    btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Simpan Profil');
-                    $('#profileSuccessAlert').removeClass('d-none').text(res.message);
-                    $('#profileErrorAlert').addClass('d-none');
-                    $('#profile-display-alamat').text(form.find('textarea[name="alamat"]').val() || 'Alamat belum diisi');
-                    $('#profile-display-admin').text(form.find('input[name="nama_admin"]').val() || 'Nama Admin belum diisi');
-                    $('#profile-display-nomor').text(form.find('input[name="nomor_admin"]').val() || 'No Admin belum diisi');
-                    setTimeout(function() { $('#profileSuccessAlert').addClass('d-none'); }, 3000);
-                },
-                error: function(xhr) {
-                    btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Simpan Profil');
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
-                    $('#profileErrorAlert').removeClass('d-none').text(msg);
-                    $('#profileSuccessAlert').addClass('d-none');
+            // ── Event: browser back / forward ────────────────────────────
+            window.addEventListener('popstate', function (e) {
+                if (e.state && e.state.url) {
+                    ajaxLoadPage(e.state.url, e.state.title, false);
                 }
             });
-        });
 
+            history.replaceState(
+                { url: window.location.href, title: document.title },
+                document.title,
+                window.location.href
+            );
 
+            // ── Highlight menu aktif ─────────────────────────────────────
+            function highlightActiveMenu(url) {
+                $('.metismenu a').removeClass('nav-link-active');
+                $('.metismenu a.nav-ajax').each(function () {
+                    const linkUrl = $(this).data('url') || $(this).attr('href');
+                    if (linkUrl && url.includes(linkUrl)) {
+                        $(this).addClass('nav-link-active');
+                    }
+                });
+            }
+            highlightActiveMenu(window.location.href);
 
-        // Password Form AJAX Submission
-        $(document).on('submit', '#updatePasswordForm', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            var btn = form.find('button[type="submit"]');
-            btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: form.serialize(),
-                success: function(res) {
-                    btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Ubah Password');
-                    $('#passwordSuccessAlert').removeClass('d-none').text(res.message);
-                    $('#passwordErrorAlert').addClass('d-none');
-                    form.trigger('reset');
-                    setTimeout(function() { $('#passwordSuccessAlert').addClass('d-none'); }, 3000);
-                },
-                error: function(xhr) {
-                    btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Ubah Password');
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
-                    $('#passwordErrorAlert').removeClass('d-none').text(msg);
-                    $('#passwordSuccessAlert').addClass('d-none');
-                }
-            });
-        });
-
-        // Tindak Lanjut Form AJAX Submission
-        $(document).on('submit', '#tindakLanjutForm', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            var btn = form.find('button[type="submit"]');
-            btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: form.serialize(),
-                success: function(res) {
-                    btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Simpan');
-                    if (res.status === 'success') {
-                        if (typeof ajaxLoadPage === 'function' && res.redirect) {
-                            ajaxLoadPage(res.redirect, 'Temuan Audit', true);
-                        } else {
-                            window.location.href = res.redirect || '/perusahaan/temuan-audit';
+            // ── Re-init DataTables setelah AJAX inject ───────────────────
+            function reinitDataTables() {
+                if ($.fn.DataTable) {
+                    $('#example').each(function () {
+                        if ($.fn.DataTable.isDataTable(this)) {
+                            $(this).DataTable().destroy();
                         }
+                        $(this).DataTable();
+                    });
+                    $('#example2').each(function () {
+                        if ($.fn.DataTable.isDataTable(this)) {
+                            $(this).DataTable().destroy();
+                        }
+                        $(this).DataTable({ lengthChange: false });
+                    });
+                }
+            }
+
+            // ── Trigger custom re-init untuk charts dkk ──────────────────
+            function reinitCharts() {
+                document.dispatchEvent(new CustomEvent('ajaxPageLoaded'));
+            }
+
+            $(document).on('ajaxPageLoaded', reinitDataTables);
+            reinitDataTables();
+
+            // ── Alert auto-fade ──────────────────────────────────────────
+            $(document).on('ajaxPageLoaded', function () {
+                window.setTimeout(function () {
+                    $('.alert-auto-dismiss').fadeTo(1000, 0).slideUp(1000, function () {
+                        $(this).remove();
+                    });
+                }, 3000);
+            });
+            window.setTimeout(function () {
+                $('.alert-auto-dismiss').fadeTo(1000, 0).slideUp(1000, function () {
+                    $(this).remove();
+                });
+            }, 3000);
+
+            // ── Profile Form AJAX ────────────────────────────────────────
+            $(document).on('submit', '#updateProfileForm', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                var btn = form.find('button[type="submit"]');
+                btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
+                $.ajax({
+                    url: form.attr('action'), type: 'POST', data: form.serialize(),
+                    success: function (res) {
+                        btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Simpan Profil');
+                        $('#profileSuccessAlert').removeClass('d-none').text(res.message);
+                        $('#profileErrorAlert').addClass('d-none');
+                        $('#profile-display-alamat').text(form.find('textarea[name="alamat"]').val() || 'Alamat belum diisi');
+                        $('#profile-display-admin').text(form.find('input[name="nama_admin"]').val() || 'Nama Admin belum diisi');
+                        $('#profile-display-nomor').text(form.find('input[name="nomor_admin"]').val() || 'No Admin belum diisi');
+                        setTimeout(function () { $('#profileSuccessAlert').addClass('d-none'); }, 3000);
+                    },
+                    error: function (xhr) {
+                        btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Simpan Profil');
+                        var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
+                        $('#profileErrorAlert').removeClass('d-none').text(msg);
+                        $('#profileSuccessAlert').addClass('d-none');
                     }
-                },
-                error: function(xhr) {
-                    btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Simpan');
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
-                    $('#tindakLanjutErrorAlert').removeClass('d-none').text(msg);
+                });
+            });
+
+            // ── Password Form AJAX ───────────────────────────────────────
+            $(document).on('submit', '#updatePasswordForm', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                var btn = form.find('button[type="submit"]');
+                btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
+                $.ajax({
+                    url: form.attr('action'), type: 'POST', data: form.serialize(),
+                    success: function (res) {
+                        btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Ubah Password');
+                        $('#passwordSuccessAlert').removeClass('d-none').text(res.message);
+                        $('#passwordErrorAlert').addClass('d-none');
+                        form.trigger('reset');
+                        setTimeout(function () { $('#passwordSuccessAlert').addClass('d-none'); }, 3000);
+                    },
+                    error: function (xhr) {
+                        btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Ubah Password');
+                        var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
+                        $('#passwordErrorAlert').removeClass('d-none').text(msg);
+                        $('#passwordSuccessAlert').addClass('d-none');
+                    }
+                });
+            });
+
+            // ── Tindak Lanjut Form AJAX ─────────────────────────────────
+            $(document).on('submit', '#tindakLanjutForm', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                var btn = form.find('button[type="submit"]');
+                btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
+                $.ajax({
+                    url: form.attr('action'), type: 'POST', data: form.serialize(),
+                    success: function (res) {
+                        btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Simpan');
+                        if (res.status === 'success') {
+                            if (typeof ajaxLoadPage === 'function' && res.redirect) {
+                                ajaxLoadPage(res.redirect, 'Temuan Audit', true);
+                            } else {
+                                window.location.href = res.redirect || '/perusahaan/temuan-audit';
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i> Simpan');
+                        var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
+                        $('#tindakLanjutErrorAlert').removeClass('d-none').text(msg);
+                    }
+                });
+            });
+
+            // ── Toggle Password Show/Hide ───────────────────────────────
+            $(document).on('click', '.toggle-pass', function (e) {
+                e.preventDefault();
+                var target = $($(this).data('target'));
+                var icon = $(this).find('i');
+                if (target.attr('type') === 'password') {
+                    target.attr('type', 'text');
+                    icon.removeClass('bx-hide').addClass('bx-show');
+                } else {
+                    target.attr('type', 'password');
+                    icon.removeClass('bx-show').addClass('bx-hide');
                 }
             });
-        });
 
-        // Toggle Password Show/Hide
-        $(document).on('click', '.toggle-pass', function(e) {
-            e.preventDefault();
-            var target = $($(this).data('target'));
-            var icon = $(this).find('i');
-            if (target.attr('type') === 'password') {
-                target.attr('type', 'text');
-                icon.removeClass('bx-hide').addClass('bx-show');
-            } else {
-                target.attr('type', 'password');
-                icon.removeClass('bx-show').addClass('bx-hide');
-            }
-        });
+            // ═══════════════════════════════════════════════════════════
+            //  KARYAWAN EVENT DELEGATION
+            // ═══════════════════════════════════════════════════════════
 
-        // ── KARYAWAN EVENT DELEGATION ─────────────────────────────────
-
-        // Detail Karyawan (Show Modal)
-        $(document).on('click', '.btn-show-detail', function(e) {
-            var id = $(this).data('id');
-            var modal = new bootstrap.Modal(document.getElementById('modalDetail'));
-            
-            document.getElementById('modalDetailNama').textContent = 'Memuat Data...';
-            document.getElementById('modalDetailMeta').innerHTML = '';
-            document.getElementById('modalDetailBody').innerHTML = '<div class="text-center py-5"><i class="bx bx-loader-alt bx-spin font-40 text-primary"></i></div>';
-            
-            modal.show();
-            
-            $.ajax({
-                url: '/perusahaan/karyawan/' + id,
-                type: 'GET',
-                success: function(row) {
-                    document.getElementById('modalDetailNama').textContent = row.nama;
-                    document.getElementById('modalDetailMeta').innerHTML = `
-                        <span class="badge bg-light text-dark me-2">NIK: ${row.nik}</span>
-                        <span class="badge bg-light text-dark me-2">KTP: ${row.nomor_ktp}</span>
-                        <span class="badge bg-light text-dark">HP: ${row.no_hp}</span>
-                    `;
-                    
-                    const esc = (s) => (s || '-');
-                    const jk = row.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan';
-                    const unitCls = row.unit === 'UNIT 9' ? 'primary' : 'info';
-                    const stClass = row.status === 'Aktif' ? 'success' : 'danger';
-                    const stIcon = row.status === 'Aktif' ? 'bx-check-circle' : 'bx-x-circle';
-                    
-                    const dSection = (title, content) => `
-                        <div class="px-4 py-3 bg-light border-bottom">
-                            <h6 class="mb-0 fw-bold text-primary">${title}</h6>
-                        </div>
-                        <div class="p-4"><table class="table table-sm table-borderless mb-0">${content}</table></div>
-                    `;
-                    const dRow = (label, val) => `
-                        <tr>
-                            <td width="200" class="text-muted">${label}</td>
-                            <td width="15">:</td>
-                            <td>${val}</td>
-                        </tr>
-                    `;
-
-                    document.getElementById('modalDetailBody').innerHTML =
-                        dSection('Identitas Utama', [
-                            dRow('Nama Lengkap',   `<strong>${esc(row.nama)}</strong>`),
-                            dRow('NIK Karyawan',   esc(row.nik)),
-                            dRow('Nomor KTP',      esc(row.nomor_ktp)),
-                            dRow('NPWP',           esc(row.npwp)),
-                            dRow('No HP',          esc(row.no_hp)),
-                            dRow('Email',          esc(row.email)),
-                        ].join('')) +
-
-                        dSection('Data Pribadi', [
-                            dRow('Jenis Kelamin',     jk),
-                            dRow('Agama',             esc(row.agama)),
-                            dRow('Tempat, Tgl Lahir', `${esc(row.tempat_lahir)}, ${row.tanggal_lahir || '-'}`),
-                            dRow('Status Perkawinan', esc(row.status_perkawinan)),
-                        ].join('')) +
-
-                        dSection('Alamat Asal / Kelahiran', [
-                            dRow('Alamat',           esc(row.alamat_tinggal)),
-                            dRow('Desa / Kelurahan', esc(row.desa)),
-                            dRow('Kecamatan',        esc(row.kecamatan)),
-                            dRow('Kabupaten / Kota', esc(row.kabupaten)),
-                            dRow('Provinsi',         esc(row.provinsi)),
-                        ].join('')) +
-
-                        dSection('Alamat Sesuai KTP/Domisili', [
-                            dRow('Alamat KTP', esc(row.alamat_ktp)),
-                        ].join('')) +
-
-                        dSection('Data Kepegawaian', [
-                            dRow('Mulai Masuk Kerja',    esc(row.mulai_masuk_kerja)),
-                            dRow('Pendidikan Terakhir',  esc(row.pendidikan_terakhir)),
-                            dRow('BPJS Kesehatan',       esc(row.bpjs_kesehatan)),
-                            dRow('BPJS Ketenagakerjaan', esc(row.bpjs_ketenagakerjaan)),
-                        ].join('')) +
-
-                        dSection('Jabatan & Struktur Organisasi', [
-                            dRow('Jabatan',    esc(row.jabatan)),
-                            dRow('Divisi',     esc(row.div_desc)),
-                            dRow('Sub Divisi', esc(row.subdiv_desc)),
-                            dRow('Unit',       `<span class="badge bg-${unitCls} rounded-pill px-3">${esc(row.unit)}</span>`),
-                            dRow('Status',     `<span class="badge bg-${stClass} rounded-pill px-3"><i class="bx ${stIcon} me-1"></i>${esc(row.status)}</span>`),
-                        ].join('')) +
-
-                        `<div style="height:12px"></div>`;
-
-                    document.getElementById('modalEditLink').href = '/perusahaan/karyawan/' + row.id + '/edit';
-                },
-                error: function(xhr) {
-                    document.getElementById('modalDetailBody').innerHTML = '<div class="alert alert-danger m-3">Gagal mengambil data karyawan.</div>';
-                }
+            $(document).on('click', '.btn-show-detail', function (e) {
+                var id = $(this).data('id');
+                var modal = new bootstrap.Modal(document.getElementById('modalDetail'));
+                document.getElementById('modalDetailNama').textContent = 'Memuat Data...';
+                document.getElementById('modalDetailMeta').innerHTML = '';
+                document.getElementById('modalDetailBody').innerHTML = '<div class="text-center py-5"><i class="bx bx-loader-alt bx-spin font-40 text-primary"></i></div>';
+                modal.show();
+                $.ajax({
+                    url: '/perusahaan/karyawan/' + id, type: 'GET',
+                    success: function (row) {
+                        document.getElementById('modalDetailNama').textContent = row.nama;
+                        document.getElementById('modalDetailMeta').innerHTML =
+                            '<span class="badge bg-light text-dark me-2">NIK: ' + (row.nik || '') + '</span>' +
+                            '<span class="badge bg-light text-dark me-2">KTP: ' + (row.nomor_ktp || '') + '</span>' +
+                            '<span class="badge bg-light text-dark">HP: ' + (row.no_hp || '') + '</span>';
+                        var esc = function (s) { return s || '-'; };
+                        var jk = row.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan';
+                        var unitCls = row.unit === 'UNIT 9' ? 'primary' : 'info';
+                        var stClass = row.status === 'Aktif' ? 'success' : 'danger';
+                        var stIcon = row.status === 'Aktif' ? 'bx-check-circle' : 'bx-x-circle';
+                        var dRow = function (l, v) { return '<tr><td width="200" class="text-muted">' + l + '</td><td width="15">:</td><td>' + v + '</td></tr>'; };
+                        var dSec = function (t, c) { return '<div class="px-4 py-3 bg-light border-bottom"><h6 class="mb-0 fw-bold text-primary">' + t + '</h6></div><div class="p-4"><table class="table table-sm table-borderless mb-0">' + c + '</table></div>'; };
+                        document.getElementById('modalDetailBody').innerHTML =
+                            dSec('Identitas Utama',
+                                dRow('Nama', '<strong>' + esc(row.nama) + '</strong>') +
+                                dRow('NIK', esc(row.nik)) + dRow('KTP', esc(row.nomor_ktp)) +
+                                dRow('NPWP', esc(row.npwp)) + dRow('HP', esc(row.no_hp)) +
+                                dRow('Email', esc(row.email))) +
+                            dSec('Data Pribadi',
+                                dRow('Jenis Kelamin', jk) + dRow('Agama', esc(row.agama)) +
+                                dRow('Tgl Lahir', (row.tempat_lahir || '') + ', ' + (row.tanggal_lahir || '-')) +
+                                dRow('Status', esc(row.status_perkawinan))) +
+                            dSec('Alamat Tinggal',
+                                dRow('Alamat', esc(row.alamat_tinggal)) +
+                                dRow('Desa', esc(row.desa)) + dRow('Kecamatan', esc(row.kecamatan)) +
+                                dRow('Kabupaten', esc(row.kabupaten)) + dRow('Provinsi', esc(row.provinsi))) +
+                            dSec('Alamat KTP', dRow('Alamat KTP', esc(row.alamat_ktp))) +
+                            dSec('Kepegawaian',
+                                dRow('Mulai Kerja', esc(row.mulai_masuk_kerja)) +
+                                dRow('Pendidikan', esc(row.pendidikan_terakhir)) +
+                                dRow('BPJS Kes', esc(row.bpjs_kesehatan)) +
+                                dRow('BPJS TK', esc(row.bpjs_ketenagakerjaan))) +
+                            dSec('Jabatan & Struktur',
+                                dRow('Jabatan', esc(row.jabatan)) +
+                                dRow('Divisi', esc(row.div_desc)) +
+                                dRow('Sub Divisi', esc(row.subdiv_desc)) +
+                                dRow('Unit', '<span class="badge bg-' + unitCls + ' px-3">' + esc(row.unit) + '</span>') +
+                                dRow('Status', '<span class="badge bg-' + stClass + ' px-3"><i class="bx ' + stIcon + ' me-1"></i>' + esc(row.status) + '</span>'));
+                        document.getElementById('modalEditLink').href = '/perusahaan/karyawan/' + row.id + '/edit';
+                    },
+                    error: function () {
+                        document.getElementById('modalDetailBody').innerHTML = '<div class="alert alert-danger m-3">Gagal mengambil data.</div>';
+                    }
+                });
             });
-        });
 
-        // Toggle Status Karyawan
-        $(document).on('submit', '.form-toggle-status', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            var btn = form.find('button[type="submit"]');
-            var currentStatus = btn.data('status');
-            const action = currentStatus === 'Aktif' ? 'menonaktifkan' : 'mengaktifkan';
-            if (!confirm(`Apakah Anda yakin ingin ${action} karyawan ini?`)) {
-                return false;
-            }
-            btn.prop('disabled', true);
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: form.serialize(),
-                success: function(res) {
-                    ajaxLoadPage(window.location.href, 'Data Karyawan', false);
-                },
-                error: function(xhr) {
-                    btn.prop('disabled', false);
-                    alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal mengubah status');
-                }
+            $(document).on('submit', '.form-toggle-status', function (e) {
+                e.preventDefault();
+                var form = $(this), btn = form.find('button[type="submit"]');
+                var cur = btn.data('status'), act = cur === 'Aktif' ? 'menonaktifkan' : 'mengaktifkan';
+                if (!confirm('Yakin ' + act + ' karyawan ini?')) return;
+                btn.prop('disabled', true);
+                $.ajax({
+                    url: form.attr('action'), type: 'POST', data: form.serialize(),
+                    success: function () { ajaxLoadPage(window.location.href, 'Data Karyawan', false); },
+                    error: function (xhr) {
+                        btn.prop('disabled', false);
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal');
+                    }
+                });
             });
-        });
 
-        // Hapus Karyawan
-        $(document).on('submit', '.form-delete-karyawan', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            var btn = form.find('button[type="submit"]');
-            var nama = btn.data('nama') || 'ini';
-            if (!confirm(`Yakin ingin menghapus karyawan ${nama}? Tindakan ini tidak dapat dibatalkan.`)) {
-                return false;
-            }
-            btn.prop('disabled', true);
-            $.ajax({
-                url: form.attr('action'),
-                type: 'DELETE',
-                data: form.serialize(),
-                success: function(res) {
-                    ajaxLoadPage(window.location.href, 'Data Karyawan', false);
-                },
-                error: function(xhr) {
-                    btn.prop('disabled', false);
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal menghapus data';
-                    alert(msg);
-                }
+            $(document).on('submit', '.form-delete-karyawan', function (e) {
+                e.preventDefault();
+                var form = $(this), btn = form.find('button[type="submit"]'), nama = btn.data('nama') || 'ini';
+                if (!confirm('Yakin hapus ' + nama + '? Tidak bisa dibatalkan.')) return;
+                btn.prop('disabled', true);
+                $.ajax({
+                    url: form.attr('action'), type: 'DELETE', data: form.serialize(),
+                    success: function () { ajaxLoadPage(window.location.href, 'Data Karyawan', false); },
+                    error: function (xhr) {
+                        btn.prop('disabled', false);
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal');
+                    }
+                });
             });
-        });
 
-        // Form Tambah / Edit Karyawan AJAX
-        $(document).on('submit', '#formKaryawan', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            var btn = form.find('button[type="submit"]');
-            var originalText = btn.html();
-            
-            // NIK & KTP Validation
-            const ktp = form.find('input[name="nomor_ktp"]').val().trim();
-            if (ktp.length !== 16 || !/^\d+$/.test(ktp)) {
-                alert('Nomor KTP harus 16 digit angka.');
-                form.find('input[name="nomor_ktp"]').focus();
-                return false;
-            }
-
-            btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
-            
-            // Decide method (if _method exists in serialize)
-            var type = form.attr('method') || 'POST';
-            if (form.find('input[name="_method"]').val()) {
-                // If it is a PUT request
-                type = 'POST';
-            }
-
-            $.ajax({
-                url: form.attr('action'),
-                type: type,
-                data: form.serialize(),
-                success: function(res) {
-                    btn.prop('disabled', false).html(originalText);
-                    alert(res.message);
-                    ajaxLoadPage('/perusahaan/karyawan', 'Data Karyawan', true);
-                },
-                error: function(xhr) {
-                    btn.prop('disabled', false).html(originalText);
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
-                    alert(msg);
-                }
+            $(document).on('submit', '#formKaryawan', function (e) {
+                e.preventDefault();
+                var form = $(this), btn = form.find('button[type="submit"]'), orig = btn.html();
+                var ktp = form.find('input[name="nomor_ktp"]').val().trim();
+                if (ktp.length !== 16 || !/^\d+$/.test(ktp)) { alert('KTP harus 16 digit angka.'); form.find('input[name="nomor_ktp"]').focus(); return false; }
+                btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
+                $.ajax({
+                    url: form.attr('action'), type: 'POST', data: form.serialize(),
+                    success: function (res) { btn.prop('disabled', false).html(orig); alert(res.message); ajaxLoadPage('/perusahaan/karyawan', 'Data Karyawan', true); },
+                    error: function (xhr) {
+                        btn.prop('disabled', false).html(orig);
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal');
+                    }
+                });
             });
-        });
 
-        // Form Import Excel (Upload & Review)
-        $(document).on('submit', '#formImportExcel', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            var formData = new FormData(this);
-            var $loader = $('#ajax-loader'), $c = $('#page-content');
-            
-            // Hide modal
-            var modalEl = document.getElementById('modalImport');
-            var modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-            
-            $loader.show();
-            $c.addClass('ajax-fading');
-            
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(html) {
-                    $c.html(html);
-                    document.title = 'Review Import Karyawan - Portal Perusahaan';
-                    history.pushState({url: '/perusahaan/karyawan/import-review', title: 'Review Import Karyawan'}, 'Review Import Karyawan', '/perusahaan/karyawan/import-review');
-                    $c.removeClass('ajax-fading');
-                    $loader.hide();
-                    document.dispatchEvent(new CustomEvent('ajaxPageLoaded'));
-                },
-                error: function(xhr) {
-                    $c.removeClass('ajax-fading');
-                    $loader.hide();
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal memproses file.';
-                    alert(msg);
-                }
+            $(document).on('submit', '#formImportExcel', function (e) {
+                e.preventDefault();
+                var form = $(this), fd = new FormData(this), $l = $('#ajax-loader'), $c = $('#page-content');
+                var mEl = document.getElementById('modalImport'), m = bootstrap.Modal.getInstance(mEl);
+                if (m) m.hide();
+                $l.show(); $c.addClass('ajax-fading');
+                $.ajax({
+                    url: form.attr('action'), type: 'POST', data: fd, processData: false, contentType: false,
+                    success: function (html) {
+                        $c.html(html);
+                        document.title = 'Review Import Karyawan - Portal Perusahaan';
+                        history.pushState({ url: '/perusahaan/karyawan/import-review', title: 'Review Import' }, 'Review Import', '/perusahaan/karyawan/import-review');
+                        $c.removeClass('ajax-fading'); $l.hide();
+                        document.dispatchEvent(new CustomEvent('ajaxPageLoaded'));
+                    },
+                    error: function (xhr) { $c.removeClass('ajax-fading'); $l.hide(); alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal'); }
+                });
             });
-        });
 
-        // Form Import Review (Save Store)
-        $(document).on('submit', '#formImport', function(e) {
-            e.preventDefault();
-            
-            let allComplete = true;
-            let firstIncomplete = -1;
-
-            if (typeof totalRows !== 'undefined') {
-                for (let i = 0; i < totalRows; i++) {
-                    checkComplete(i);
-                    if (!rowComplete[i]) {
-                        allComplete = false;
-                        if (firstIncomplete === -1) firstIncomplete = i;
+            $(document).on('submit', '#formImport', function (e) {
+                e.preventDefault();
+                var allOK = true, firstBad = -1;
+                if (typeof totalRows !== 'undefined') {
+                    for (var i = 0; i < totalRows; i++) {
+                        if (typeof checkComplete === 'function') checkComplete(i);
+                        if (typeof rowComplete !== 'undefined' && !rowComplete[i]) { allOK = false; if (firstBad === -1) firstBad = i; }
                     }
                 }
-            }
-
-            if (!allComplete) {
-                alert(`Masih ada data yang belum lengkap. Silakan lengkapi Alamat, Provinsi/Kab/Kec/Desa, Alamat KTP, Divisi, dan Sub Divisi untuk setiap karyawan.`);
-                const collapseEl = document.getElementById('detail-' + firstIncomplete);
-                if (collapseEl && !collapseEl.classList.contains('show')) {
-                    new bootstrap.Collapse(collapseEl, { toggle: true });
+                if (!allOK) {
+                    alert('Lengkapi Alamat, Provinsi/Kab/Kec/Desa, Alamat KTP, Divisi, dan Sub Divisi.');
+                    var cEl = document.getElementById('detail-' + firstBad);
+                    if (cEl && !cEl.classList.contains('show')) new bootstrap.Collapse(cEl, { toggle: true });
+                    document.getElementById('card-' + firstBad).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
                 }
-                document.getElementById('card-' + firstIncomplete).scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return false;
-            }
-
-            if (!confirm('Yakin simpan semua data karyawan? Semua akan tersimpan dengan status Aktif.')) {
-                return false;
-            }
-
-            var form = $(this);
-            var btn = form.find('#btnSimpan');
-            var originalText = btn.html();
-            btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
-            $.ajax({
-                url: '/perusahaan/karyawan/import-store',
-                type: 'POST',
-                data: form.serialize(),
-                success: function(res) {
-                    btn.prop('disabled', false).html(originalText);
-                    alert(res.message);
-                    ajaxLoadPage('/perusahaan/karyawan', 'Data Karyawan', true);
-                },
-                error: function(xhr) {
-                    btn.prop('disabled', false).html(originalText);
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan.';
-                    alert(msg);
-                }
+                if (!confirm('Simpan semua data? Status akan Aktif.')) return;
+                var form = $(this), btn = form.find('#btnSimpan'), orig = btn.html();
+                btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
+                $.ajax({
+                    url: '/perusahaan/karyawan/import-store', type: 'POST', data: form.serialize(),
+                    success: function (res) { btn.prop('disabled', false).html(orig); alert(res.message); ajaxLoadPage('/perusahaan/karyawan', 'Data Karyawan', true); },
+                    error: function (xhr) { btn.prop('disabled', false).html(orig); alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal'); }
+                });
             });
+
         });
-    });
+    </script>
 </body>
 </html>

@@ -56,17 +56,17 @@ Manajemen Users CRUD dengan Modal AJAX (Tanpa Reload)
                                     <td>{{ $row->nama }}</td>
                                     <td>
                                         <span
-                                            class="badge {{ $row->role === 'admin' ? 'bg-danger' : ($row->role === 'perusahaan' ? 'bg-info text-dark' : 'bg-warning text-dark') }} px-2.5 py-1">
+                                            class="badge {{ $row->role === 'admin' ? 'bg-danger' : ($row->role === 'perusahaan' ? 'bg-info text-dark' : 'bg-warning text-dark') }} px-2 py-1">
                                             {{ ucfirst($row->role) }}
                                         </span>
                                     </td>
                                     <td>
                                         @if(($row->status ?? 'aktif') === 'aktif')
-                                            <span class="badge" style="background-color:#198754; color:#ffffff;">
+                                            <span class="badge bg-success text-white px-2 py-1">
                                                 <i class="bx bx-check-circle me-1"></i>Aktif
                                             </span>
                                         @else
-                                            <span class="badge" style="background-color:#6c757d; color:#ffffff;">
+                                            <span class="badge bg-secondary text-white px-2 py-1">
                                                 <i class="bx bx-x-circle me-1"></i>Nonaktif
                                             </span>
                                         @endif

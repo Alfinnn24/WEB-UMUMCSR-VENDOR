@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3 fade-in-up">
     <div class="breadcrumb-title pe-3">Statistik</div>
     <div class="ps-3">
         <nav aria-label="breadcrumb">
@@ -12,7 +12,7 @@
 </div>
 
 <!-- Filter Card -->
-<div class="card border-0 shadow-sm rounded-4 mb-4">
+<div class="card border-0 shadow-sm rounded-4 mb-4 fade-in-up delay-1">
     <div class="card-body">
         <h6 class="fw-bold mb-3"><i class="bx bx-filter-alt me-2 text-primary"></i>Filter Statistik Sertifikasi</h6>
         <form id="filterSertifikasiForm" method="GET" action="{{ route('admin.dashboard') }}">
@@ -161,7 +161,7 @@
 </div>
 
 <!-- Data Listing Card -->
-<div class="card border-0 shadow-sm rounded-4">
+<div class="card border-0 shadow-sm rounded-4 fade-in-up delay-2">
     <div class="card-body">
         <div class="d-flex align-items-center mb-3">
             <div>
@@ -172,7 +172,7 @@
         
         <div class="table-responsive">
             <table class="table table-hover table-sm align-middle mb-0" id="sertifikasiTable">
-                <thead class="table-light">
+                <thead class="table-dark">
                     <tr>
                         <th width="35">#</th>
                         <th>Perusahaan</th>
@@ -216,7 +216,7 @@
                         <td><small>{{ $r->tanggal_sertifikasi ? date('d/m/Y', strtotime($r->tanggal_sertifikasi)) : '-' }}</small></td>
                         <td><small>{{ $r->masa_berlaku }} Bln</small></td>
                         <td><small class="text-{{ $badge_c }} fw-semibold">{{ $r->tanggal_expired ? date('d/m/Y', strtotime($r->tanggal_expired)) : '-' }}</small></td>
-                        <td><span class="badge bg-{{ $badge_c }} rounded-pill px-2" style="font-size: .7rem;">{{ $badge_l }}</span></td>
+                        <td><span class="badge bg-{{ $badge_c }} badge-xs rounded-pill">{{ $badge_l }}</span></td>
                         <td>
                             @if (!empty($r->file_sertifikat))
                                 <a href="/uploads/sertifikasi/{{ $r->file_sertifikat }}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">

@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3 fade-in-up">
     <div class="breadcrumb-title pe-3">Laporan</div>
     <div class="ps-3">
         <nav aria-label="breadcrumb">
@@ -12,7 +12,7 @@
 </div>
 
 <!-- Filter Card -->
-<div class="card border-0 shadow-sm rounded-4 mb-4">
+<div class="card border-0 shadow-sm rounded-4 mb-4 fade-in-up delay-1">
     <div class="card-body">
         <h6 class="fw-bold mb-3"><i class="bx bx-filter-alt me-2 text-primary"></i>Filter Laporan Tenaga Kerja</h6>
         <form id="filterLapTenakerForm" method="GET" action="{{ route('admin.dashboard') }}">
@@ -30,14 +30,20 @@
                 <div class="col-md-3">
                     <label class="form-label small text-muted mb-1">Tahun Laporan</label>
                     <select name="tahun" class="form-select form-select-sm">
+                        <option value="">— Semua Tahun —</option>
                         @foreach ($all_tahun as $t)
                         <option value="{{ $t }}" {{ $filter_tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bx bx-search me-1"></i>Filter</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-reset-lap-tenaker"><i class="bx bx-reset me-1"></i>Reset</button>
+                <div class="col-md-4 d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bx bx-search me-1"></i>Filter</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-reset-lap-tenaker"><i class="bx bx-reset me-1"></i>Reset</button>
+                    <a href="/admin/laporan/export_tenaga_kerja.php" target="_blank"
+                       class="btn btn-sm btn-success flex-fill"
+                       onclick="event.preventDefault();var f=$('#filterLapTenakerForm');window.open('/admin/laporan/export_tenaga_kerja.php?'+f.serialize(),'_blank');">
+                        <i class="bx bx-download me-1"></i> Excel
+                    </a>
                 </div>
             </div>
         </form>
@@ -45,7 +51,7 @@
 </div>
 
 <!-- Laporan Table Card -->
-<div class="card border-0 shadow-sm rounded-4">
+<div class="card border-0 shadow-sm rounded-4 fade-in-up delay-2">
     <div class="card-body">
         <div class="d-flex align-items-center mb-3">
             <div>
@@ -55,8 +61,8 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-striped table-hover table-sm align-middle mb-0 table-report" id="tblLapTenaker" data-export-title="Laporan Tenaga Kerja">
-                <thead class="table-light">
+            <table class="table table-striped table-hover table-sm align-middle mb-0" id="tblLapTenaker">
+                <thead class="table-dark">
                     <tr>
                         <th width="35">#</th>
                         <th>Perusahaan</th>
@@ -75,9 +81,9 @@
                         <td><small>{{ $r->tgl_laporan ? date('d/m/Y', strtotime($r->tgl_laporan)) : '-' }}</small></td>
                         <td class="text-center">
                             @if ($r->status_upload === 'Sudah Upload')
-                                <span class="badge bg-success rounded-pill px-2" style="font-size: .7rem;">Sudah Upload</span>
+                                <span class="badge bg-success badge-xs rounded-pill">Sudah Upload</span>
                             @else
-                                <span class="badge bg-danger rounded-pill px-2" style="font-size: .7rem;">Belum Upload</span>
+                                <span class="badge bg-danger badge-xs rounded-pill">Belum Upload</span>
                             @endif
                         </td>
                         <td>

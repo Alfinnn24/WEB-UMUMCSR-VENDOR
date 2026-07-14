@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3 fade-in-up">
     <div class="breadcrumb-title pe-3">Laporan</div>
     <div class="ps-3">
         <nav aria-label="breadcrumb">
@@ -12,7 +12,7 @@
 </div>
 
 <!-- Filter Card -->
-<div class="card border-0 shadow-sm rounded-4 mb-4">
+<div class="card border-0 shadow-sm rounded-4 mb-4 fade-in-up delay-1">
     <div class="card-body">
         <h6 class="fw-bold mb-3"><i class="bx bx-filter-alt me-2 text-primary"></i>Filter Laporan Sertifikasi</h6>
         <form id="filterLapSertifikasiForm" method="GET" action="{{ route('admin.dashboard') }}">
@@ -45,9 +45,14 @@
                         <option value="expired" {{ $filter_status === 'expired' ? 'selected' : '' }}>Expired</option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bx bx-search me-1"></i>Filter</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-reset-lap-sertifikasi"><i class="bx bx-reset me-1"></i>Reset</button>
+                <div class="col-md-2 d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bx bx-search me-1"></i>Filter</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-reset-lap-sertifikasi"><i class="bx bx-reset me-1"></i>Reset</button>
+                    <a href="/admin/laporan/export_sertifikasi.php" target="_blank"
+                       class="btn btn-sm btn-success flex-fill"
+                       onclick="event.preventDefault();var f=$('#filterLapSertifikasiForm');window.open('/admin/laporan/export_sertifikasi.php?'+f.serialize(),'_blank');">
+                        <i class="bx bx-download me-1"></i> Excel
+                    </a>
                 </div>
             </div>
         </form>
@@ -55,7 +60,7 @@
 </div>
 
 <!-- Laporan Table Card -->
-<div class="card border-0 shadow-sm rounded-4">
+<div class="card border-0 shadow-sm rounded-4 fade-in-up delay-2">
     <div class="card-body">
         <div class="d-flex align-items-center mb-3">
             <div>
@@ -65,8 +70,8 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-striped table-hover table-sm align-middle mb-0 table-report" id="tblLapSertifikasi" data-export-title="Laporan Sertifikasi Karyawan">
-                <thead class="table-light">
+            <table class="table table-striped table-hover table-sm align-middle mb-0" id="tblLapSertifikasi">
+                <thead class="table-dark">
                     <tr>
                         <th width="35">#</th>
                         <th>Perusahaan</th>
@@ -116,7 +121,7 @@
                                 <span class="small">{{ number_format($sisa) }} Hari</span>
                             @endif
                         </td>
-                        <td><span class="badge bg-{{ $badge_c }} rounded-pill px-2" style="font-size: .7rem;">{{ $badge_l }}</span></td>
+                        <td><span class="badge bg-{{ $badge_c }} badge-xs rounded-pill">{{ $badge_l }}</span></td>
                     </tr>
                 @endforeach
                 </tbody>

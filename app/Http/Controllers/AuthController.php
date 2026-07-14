@@ -82,6 +82,50 @@ class AuthController extends Controller
         return redirect()->route('login')->with('success', 'Anda berhasil logout.');
     }
 
+    // ─── Halaman Register ─────────────────────────────────────────────
+    public function showRegister()
+    {
+        if (session('logged_in') && session('user_id')) {
+            return $this->redirectByRole(session('role'));
+        }
+        return view('auth.register');
+    }
+
+    // ─── Proses Register ──────────────────────────────────────────────
+    public function register(Request $request)
+    {
+        $request->validate([
+            'nid'        => 'required|string|max:50|unique:users,nid',
+            'nama'       => 'required|string|max:255',
+            'password'   => 'required|string|min:6',
+            'alamat'     => 'required|string',
+            'nama_admin' => 'required|string|max:255',
+            'nomor_admin'=> 'required|string|max:50',
+        ], [
+            'nid.required'     => 'NID wajib diisi.',
+            'nid.unique'       => 'NID sudah terdaftar. Silakan gunakan NID lain.',
+            'nama.required'    => 'Nama Perusahaan wajib diisi.',
+            'password.required'=> 'Password wajib diisi.',
+            'password.min'     => 'Password minimal 6 karakter.',
+            'alamat.required'  => 'Alamat wajib diisi.',
+            'nama_admin.required' => 'Nama Admin / PIC wajib diisi.',
+            'nomor_admin.required' => 'No. WhatsApp wajib diisi.',
+        ]);
+
+        DB::table('users')->insert([
+            'nid'         => trim($request->nid),
+            'nama'        => trim($request->nama),
+            'password'    => Hash::make($request->password),
+            'role'        => 'perusahaan',
+            'status'      => 'aktif',
+            'alamat'      => trim($request->alamat),
+            'nama_admin'  => trim($request->nama_admin),
+            'nomor_admin' => trim($request->nomor_admin),
+        ]);
+
+        return redirect()->route('login')->with('success', 'Pendaftaran berhasil! Silakan login.');
+    }
+
     // ─── Helper: redirect berdasarkan role ─────────────────────────────
     private function redirectByRole(string $role)
     {

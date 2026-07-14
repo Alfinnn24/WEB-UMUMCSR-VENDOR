@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3 fade-in-up">
     <div class="breadcrumb-title pe-3">Laporan</div>
     <div class="ps-3">
         <nav aria-label="breadcrumb">
@@ -12,7 +12,7 @@
 </div>
 
 <!-- Filter Card -->
-<div class="card border-0 shadow-sm rounded-4 mb-4">
+<div class="card border-0 shadow-sm rounded-4 mb-4 fade-in-up delay-1">
     <div class="card-body">
         <h6 class="fw-bold mb-3"><i class="bx bx-filter-alt me-2 text-primary"></i>Filter Laporan Kontrak Kerja</h6>
         <form id="filterLapKontrakForm" method="GET" action="{{ route('admin.dashboard') }}">
@@ -36,9 +36,14 @@
                         <option value="selesai" {{ $filter_status === 'selesai' ? 'selected' : '' }}>Selesai</option>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bx bx-search me-1"></i>Filter</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-reset-lap-kontrak"><i class="bx bx-reset me-1"></i>Reset</button>
+                <div class="col-md-3 d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bx bx-search me-1"></i>Filter</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-reset-lap-kontrak"><i class="bx bx-reset me-1"></i>Reset</button>
+                    <a href="/admin/laporan/export_kontrak.php" target="_blank"
+                       class="btn btn-sm btn-success flex-fill"
+                       onclick="event.preventDefault();var f=$('#filterLapKontrakForm');window.open('/admin/laporan/export_kontrak.php?'+f.serialize(),'_blank');">
+                        <i class="bx bx-download me-1"></i> Excel
+                    </a>
                 </div>
             </div>
         </form>
@@ -46,7 +51,7 @@
 </div>
 
 <!-- Laporan Table Card -->
-<div class="card border-0 shadow-sm rounded-4">
+<div class="card border-0 shadow-sm rounded-4 fade-in-up delay-2">
     <div class="card-body">
         <div class="d-flex align-items-center mb-3">
             <div>
@@ -56,8 +61,8 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-striped table-hover table-sm align-middle mb-0 table-report" id="tblLapKontrak" data-export-title="Laporan Kontrak Kerja">
-                <thead class="table-light">
+            <table class="table table-striped table-hover table-sm align-middle mb-0" id="tblLapKontrak">
+                <thead class="table-dark">
                     <tr>
                         <th width="35">#</th>
                         <th>Perusahaan</th>
@@ -111,14 +116,14 @@
                                 <span class="badge bg-light text-dark border">0</span>
                             @endif
                         </td>
-                        <td><span class="badge bg-{{ $badge_c }} rounded-pill px-2" style="font-size: .7rem;">{{ $badge_l }}</span></td>
+                        <td><span class="badge bg-{{ $badge_c }} badge-xs rounded-pill">{{ $badge_l }}</span></td>
                         <td>
                             @if ($r->status_berkas === 'Ada')
-                                <a href="/uploads/kontrak/{{ $r->berkas_kontrak }}" target="_blank" class="btn btn-sm btn-outline-success py-0 px-2 d-inline-flex align-items-center gap-1" style="font-size: .7rem;">
+                                <a href="/uploads/kontrak/{{ $r->berkas_kontrak }}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2 d-inline-flex align-items-center gap-1" style="font-size: .75rem;">
                                     <i class="bx bx-download"></i> Unduh
                                 </a>
                             @else
-                                <span class="badge bg-light text-secondary border" style="font-size: .7rem;">Belum Upload</span>
+                                <span class="badge bg-light text-secondary border badge-xs">Belum Upload</span>
                             @endif
                         </td>
                     </tr>

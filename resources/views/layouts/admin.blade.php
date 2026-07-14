@@ -14,7 +14,6 @@
     <link href="/assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css" rel="stylesheet" />
     <link href="/assets/plugins/metismenu/css/metisMenu.min.css" rel="stylesheet" />
     <link href="/assets/plugins/datatable/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
-    <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet" />
     {{-- Loader (pace.js dimatikan untuk XHR agar tidak flicker saat AJAX nav) --}}
     <link href="/assets/css/pace.min.css" rel="stylesheet" />
     <script>window.paceOptions = { ajax: false, restartOnRequestAfter: false };</script>
@@ -73,6 +72,18 @@
             background: rgba(255, 255, 255, 0.15) !important;
             border-radius: 6px;
         }
+
+        /* ── Badge ukuran kecil untuk di dalam tabel ── */
+        .badge-xs {
+            font-size: .7rem;
+            padding: 3px 8px;
+        }
+
+        /* ── Badge ukuran sedang ── */
+        .badge-sm {
+            font-size: .8rem;
+            padding: 4px 10px;
+        }
     </style>
 </head>
 
@@ -107,7 +118,7 @@
                 </li>
 
                 <li>
-                    <a href="#" class="nav-ajax" data-url="{{ route('admin.dashboard') }}?page=profile"
+                    <a href="#" class="nav-ajax" data-url="{{ route('admin.profile.index') }}"
                         data-title="Profile">
                         <div class="parent-icon"><i class='bx bxs-user-circle'></i></div>
                         <div class="menu-title">Profile</div>
@@ -258,8 +269,8 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <a class="dropdown-item nav-ajax" href="{{ route('admin.dashboard') }}?page=profile"
-                                    data-url="{{ route('admin.dashboard') }}?page=profile" data-title="Profile">
+                                <a class="dropdown-item nav-ajax" href="{{ route('admin.profile.index') }}"
+                                    data-url="{{ route('admin.profile.index') }}" data-title="Profile">
                                     <i class="bx bx-user"></i><span>Profile</span>
                                 </a>
                             </li>
@@ -311,14 +322,6 @@
     <script src="/assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js"></script>
     <script src="/assets/plugins/datatable/js/jquery.dataTables.min.js"></script>
     <script src="/assets/plugins/datatable/js/dataTables.bootstrap5.min.js"></script>
-    <!-- DataTables Buttons and Export Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
     <!-- ApexCharts dimuat SEKALI di layout, bukan di tiap partial -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="/assets/js/app_baru.js?v=3"></script>
@@ -450,8 +453,7 @@
                             $(this).DataTable().destroy();
                         }
                         $(this).DataTable({
-                            lengthChange: false,
-                            buttons: ['copy', 'excel', 'pdf', 'print']
+                            lengthChange: false
                         });
                     });
                     $('.table-report').each(function () {
@@ -467,14 +469,7 @@
                                 lengthMenu: "Tampilkan _MENU_ data",
                                 info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                                 paginate: { first: "Pertama", last: "Terakhir", next: "Lanjut", previous: "Kembali" }
-                            },
-                            dom: 'Bfrtip',
-                            buttons: [
-                                { extend: 'copy', className: 'btn btn-sm btn-outline-secondary' },
-                                { extend: 'excel', className: 'btn btn-sm btn-outline-success', title: $(this).data('export-title') || 'Laporan' },
-                                { extend: 'pdf', className: 'btn btn-sm btn-outline-danger', title: $(this).data('export-title') || 'Laporan' },
-                                { extend: 'print', className: 'btn btn-sm btn-outline-primary' }
-                            ]
+                            }
                         });
                     });
                 }
@@ -625,10 +620,10 @@
                 ajaxLoadPage('/admin/dashboard?page=laporan_kontrak', 'Laporan Kontrak Kerja', true);
             });
 
-            // ── Alert auto-fade ──────────────────────────────────────────────
+            // ── Alert auto-fade (hanya yang punya class alert-auto-dismiss) ──
             $(document).on('ajaxPageLoaded', function () {
                 window.setTimeout(function () {
-                    $('.alert').fadeTo(1000, 0).slideUp(1000, function () {
+                    $('.alert-auto-dismiss').fadeTo(1000, 0).slideUp(1000, function () {
                         $(this).remove();
                     });
                 }, 3000);
@@ -636,7 +631,7 @@
 
             // Alert di halaman pertama (server-rendered)
             window.setTimeout(function () {
-                $('.alert').fadeTo(1000, 0).slideUp(1000, function () {
+                $('.alert-auto-dismiss').fadeTo(1000, 0).slideUp(1000, function () {
                     $(this).remove();
                 });
             }, 3000);
