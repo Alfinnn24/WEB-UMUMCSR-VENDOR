@@ -15,7 +15,7 @@ class UsersController extends Controller
      */
     public function index(Request $request)
     {
-        $users = DB::table('users')->orderBy('created_at', 'desc')->get();
+        $users = DB::table('users')->orderBy('created_at', 'desc')->paginate(15, ['*'], 'p')->withQueryString();
 
         if ($request->ajax()) {
             return view('admin.users.index', compact('users'));

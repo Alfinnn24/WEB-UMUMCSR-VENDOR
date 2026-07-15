@@ -22,15 +22,27 @@
     <link rel="stylesheet" href="/assets/css/header-colors.css" />
     <title>{{ $pageTitle ?? 'Dashboard' }} - Portal Perusahaan</title>
     <style>
-        #ajax-loader{display:none;position:fixed;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#4f46e5,#0ea5e9,#10b981);background-size:200% 100%;animation:shimmer 1.2s ease-in-out infinite;z-index:9999}
-        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-        #page-content{position:relative;transition:opacity .18s ease}
-        #page-content.ajax-fading{opacity:.3;pointer-events:none}
+        #page-content{position:relative;transition:opacity .06s ease}
         .metismenu li.mm-active>a,.metismenu li>a.nav-link-active{background:rgba(255,255,255,.15)!important;border-radius:6px}
+        div.dataTables_wrapper div.dataTables_paginate .pagination .page-link{padding:4px 11px;font-size:.8rem;border-radius:5px;margin:0 1px;color:#374151;border:1px solid #e5e7eb;background:#fff;transition:.15s ease}
+        div.dataTables_wrapper div.dataTables_paginate .pagination .page-link:hover{background:#f3f4f6;border-color:#d1d5db;z-index:0}
+        div.dataTables_wrapper div.dataTables_paginate .pagination .page-item.active .page-link{background:#4f46e5;border-color:#4f46e5;color:#fff;font-weight:600}
+        div.dataTables_wrapper div.dataTables_paginate .pagination .page-item.disabled .page-link{color:#9ca3af;pointer-events:none;background:#f9fafb;border-color:#f3f4f6}
+        div.dataTables_wrapper table.dataTable{margin-bottom:0!important}div.dataTables_wrapper div.dataTables_info:empty,div.dataTables_wrapper div.dataTables_paginate:empty{display:none!important;padding:0!important;margin:0!important}div.dataTables_wrapper > div.row:last-child{margin-bottom:0;padding-bottom:0}
+
+        /* ── Custom Pagination Buttons (Previous / Next) ── */
+        .custom-pagination{margin-top:0}
+        .btn-pagination{display:inline-flex;align-items:center;padding:7px 18px;font-size:.82rem;font-weight:600;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;transition:all .25s cubic-bezier(.4,0,.2,1);text-decoration:none;cursor:pointer;gap:2px}
+        .btn-pagination:hover:not(.disabled){background:linear-gradient(135deg,#4f46e5 0%,#6366f1 100%);color:#fff;border-color:#4f46e5;transform:translateY(-2px);box-shadow:0 4px 15px rgba(79,70,229,.35)}
+        .btn-pagination:active:not(.disabled){transform:translateY(0);box-shadow:0 2px 8px rgba(79,70,229,.25)}
+        .btn-pagination.disabled{opacity:.45;cursor:not-allowed;background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
+        .btn-pagination i{font-size:1.1rem;line-height:1}
+        .btn-pagination-next:hover:not(.disabled){background:linear-gradient(135deg,#0ea5e9 0%,#06b6d4 100%);border-color:#0ea5e9;box-shadow:0 4px 15px rgba(14,165,233,.35)}
+        .pagination-pill{display:inline-flex;align-items:center;padding:5px 14px;font-size:.78rem;font-weight:700;color:#4f46e5;background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%);border-radius:99px;letter-spacing:.3px;border:1px solid #c7d2fe;user-select:none}
+        .pagination-info{line-height:1.3}
     </style>
 </head>
 <body>
-    <div id="ajax-loader"></div>
     <div class="wrapper">
 
         {{-- ── SIDEBAR ── --}}
@@ -154,73 +166,83 @@
                 }
             });
 
-            // ── Fungsi load halaman via AJAX ────────────────────────────
-            function ajaxLoadPage(url, pageTitle, pushHistory) {
-                var $loader = $('#ajax-loader');
-                var $content = $('#page-content');
+            // ════════════════════════════════════════════════════════════
+            // INSTANT NAVIGATION ENGINE — zero reload, zero delay
+            // ════════════════════════════════════════════════════════════
+            const pageCache = new Map();
+            const $content = $('#page-content');
+            const TITLE_SUFFIX = ' - Portal Perusahaan';
 
-                $loader.show();
-                $content.addClass('ajax-fading');
-
-                $.ajax({
-                    url: url,
-                    type: 'GET',
-                    success: function (html) {
-                        setTimeout(function () {
-                            $content.html(html);
-
-                            if (pageTitle) {
-                                document.title = pageTitle + ' - Portal Perusahaan';
-                            }
-
-                            if (pushHistory !== false) {
-                                history.pushState({ url: url, title: pageTitle }, pageTitle, url);
-                            }
-
-                            $content.removeClass('ajax-fading');
-                            $('.page-wrapper').animate({ scrollTop: 0 }, 150);
-
-                            reinitDataTables();
-                            reinitCharts();
-                            highlightActiveMenu(url);
-
-                            $loader.hide();
-                        }, 180);
-                    },
-                    error: function (xhr) {
-                        $content.html(
-                            '<div class="alert alert-danger m-4">' +
-                            '<i class="bx bx-error-circle me-2"></i>' +
-                            'Gagal memuat halaman (' + xhr.status + '). Coba refresh atau hubungi Admin.' +
-                            '</div>'
-                        );
-                        $content.removeClass('ajax-fading');
-                        $loader.hide();
-                    }
-                });
+            // ── Prefetch halaman di background ─────────────────────────
+            function prefetch(url) {
+                if (!url || url === '#' || url === 'javascript:;' || pageCache.has(url)) return;
+                $.ajax({ url, type:'GET',
+                    headers:{'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')}
+                }).done(function(html) { pageCache.set(url, html); });
             }
 
-            // ── Event: klik link sidebar / header ───────────────────────
+            // ── Instant load — swap konten seketika ────────────────────
+            // Fungsi dipanggil dengan nama 'ajaxLoadPage' agar kompatibel
+            // dengan callback CRUD (reload setelah create/edit/delete).
+            window.ajaxLoadPage = function(url, pageTitle, pushHistory) {
+                if (!url || url === '#' || url === 'javascript:;') return;
+
+                if (pageCache.has(url)) {
+                    applyContent(url, pageTitle, pushHistory, pageCache.get(url));
+                    return;
+                }
+
+                $content.css('opacity', '.5');
+                $.ajax({
+                    url, type:'GET',
+                    headers:{'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')},
+                    success: function(html) {
+                        pageCache.set(url, html);
+                        applyContent(url, pageTitle, pushHistory, html);
+                    },
+                    error: function(xhr) {
+                        $content.css('opacity','1');
+                        $content.html('<div class="alert alert-danger m-4"><i class="bx bx-error-circle me-2"></i>Gagal memuat halaman ('+xhr.status+').</div>');
+                    }
+                });
+            };
+
+            function applyContent(url, pageTitle, pushHistory, html) {
+                $content.html(html).css('opacity', '1');
+                if (pageTitle) document.title = pageTitle + TITLE_SUFFIX;
+                if (pushHistory !== false) history.pushState({url,title:pageTitle}, pageTitle, url);
+                $('.page-wrapper').animate({ scrollTop: 0 }, 100);
+                reinitDataTables();
+                reinitCharts();
+                highlightActiveMenu(url);
+            }
+
+            // ── Prefetch sidebar saat hover ────────────────────────────
+            $(document).on('mouseenter', 'a.nav-ajax', function () {
+                const url = $(this).data('url') || $(this).attr('href');
+                if (url && !pageCache.has(url)) prefetch(url);
+            });
+
+            // ── Klik link sidebar / header ─────────────────────────────
             $(document).on('click', 'a.nav-ajax', function (e) {
                 e.preventDefault();
                 const url = $(this).data('url') || $(this).attr('href');
                 const pageTitle = $(this).data('title') || '';
-                if (!url || url === '#' || url === 'javascript:;') return;
                 ajaxLoadPage(url, pageTitle, true);
             });
 
-            // ── Event: browser back / forward ────────────────────────────
+            // ── Browser back / forward ──────────────────────────────────
             window.addEventListener('popstate', function (e) {
-                if (e.state && e.state.url) {
-                    ajaxLoadPage(e.state.url, e.state.title, false);
-                }
+                if (e.state && e.state.url) ajaxLoadPage(e.state.url, e.state.title, false);
             });
+            history.replaceState({url:window.location.href,title:document.title}, document.title, window.location.href);
 
-            history.replaceState(
-                { url: window.location.href, title: document.title },
-                document.title,
-                window.location.href
-            );
+            // ── Prefetch semua sidebar setelah halaman siap ────────────
+            setTimeout(function () {
+                $('.nav-ajax[data-url]').each(function () {
+                    prefetch($(this).data('url'));
+                });
+            }, 800);
 
             // ── Highlight menu aktif ─────────────────────────────────────
             function highlightActiveMenu(url) {
@@ -247,7 +269,12 @@
                         if ($.fn.DataTable.isDataTable(this)) {
                             $(this).DataTable().destroy();
                         }
-                        $(this).DataTable({ lengthChange: false });
+                        $(this).DataTable({
+                            paging: false,
+                            info: false,
+                            searching: false,
+                            lengthChange: false
+                        });
                     });
                 }
             }
@@ -259,6 +286,15 @@
 
             $(document).on('ajaxPageLoaded', reinitDataTables);
             reinitDataTables();
+
+            // ── Pagination AJAX (server-side pagination links) ──
+            $(document).on('click', '.pagination a.page-link, .custom-pagination a.page-link', function (e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+                if (url) {
+                    ajaxLoadPage(url, document.title, true);
+                }
+            });
 
             // ── Alert auto-fade ──────────────────────────────────────────
             $(document).on('ajaxPageLoaded', function () {
@@ -473,20 +509,19 @@
 
             $(document).on('submit', '#formImportExcel', function (e) {
                 e.preventDefault();
-                var form = $(this), fd = new FormData(this), $l = $('#ajax-loader'), $c = $('#page-content');
+                var form = $(this), fd = new FormData(this), $c = $('#page-content');
                 var mEl = document.getElementById('modalImport'), m = bootstrap.Modal.getInstance(mEl);
                 if (m) m.hide();
-                $l.show(); $c.addClass('ajax-fading');
+                $c.css('opacity', '.5');
                 $.ajax({
                     url: form.attr('action'), type: 'POST', data: fd, processData: false, contentType: false,
                     success: function (html) {
-                        $c.html(html);
+                        $c.html(html).css('opacity', '1');
                         document.title = 'Review Import Karyawan - Portal Perusahaan';
                         history.pushState({ url: '/perusahaan/karyawan/import-review', title: 'Review Import' }, 'Review Import', '/perusahaan/karyawan/import-review');
-                        $c.removeClass('ajax-fading'); $l.hide();
                         document.dispatchEvent(new CustomEvent('ajaxPageLoaded'));
                     },
-                    error: function (xhr) { $c.removeClass('ajax-fading'); $l.hide(); alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal'); }
+                    error: function (xhr) { $c.css('opacity', '1'); alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Gagal'); }
                 });
             });
 

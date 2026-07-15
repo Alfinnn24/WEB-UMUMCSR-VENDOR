@@ -43,7 +43,7 @@ class TemuanAuditController extends Controller
             $query->where('t.status', $request->input('status'));
         }
 
-        $temuan = $query->orderBy('t.created_at', 'desc')->get();
+        $temuan = $query->orderBy('t.created_at', 'desc')->paginate(15, ['*'], 'p')->withQueryString();
 
         // Data array to pass to views
         $data = [

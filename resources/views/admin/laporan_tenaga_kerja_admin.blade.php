@@ -56,7 +56,7 @@
         <div class="d-flex align-items-center mb-3">
             <div>
                 <h6 class="fw-bold mb-0">Data Laporan Tenaga Kerja</h6>
-                <small class="text-muted">Menampilkan <strong>{{ count($data_flat) }}</strong> data (Tahun {{ $filter_tahun }})</small>
+                <small class="text-muted">Menampilkan <strong>{{ $data_flat->total() }}</strong> data (Tahun {{ $filter_tahun }})</small>
             </div>
         </div>
 
@@ -100,5 +100,11 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($data_flat->hasPages())
+        <div class="mt-3 pt-2 border-top">
+            {{ $data_flat->links() }}
+        </div>
+        @endif
     </div>
 </div>

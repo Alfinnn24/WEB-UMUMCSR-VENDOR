@@ -19,7 +19,8 @@ class SertifikasiController extends Controller
             ->select('s.*', 'k.nama as nama_karyawan', 'k.nik', 'k.jabatan')
             ->where('s.perusahaan_id', $perusahaan_id)
             ->orderBy('s.id', 'desc')
-            ->get();
+            ->paginate(15, ['*'], 'p')
+            ->withQueryString();
 
         $view = 'perusahaan.sertifikasi.index';
         $params = ['data' => $data];

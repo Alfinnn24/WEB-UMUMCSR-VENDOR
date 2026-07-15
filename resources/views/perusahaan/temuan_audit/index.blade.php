@@ -48,11 +48,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $no = 1; @endphp
                     @foreach ($result as $row)
                         @php $badge_status = $row->status == 'Open' ? 'danger' : 'success'; @endphp
                         <tr>
-                            <td class="text-center">{{ $no++ }}</td>
+                            <td class="text-center">{{ $loop->iteration }}</td>
                             <td class="text-center">{{ \Carbon\Carbon::parse($row->tanggal_audit)->locale('id')->isoFormat('D MMM YYYY') }}</td>
                             <td>{!! nl2br(e($row->temuan)) !!}</td>
                             <td>
@@ -93,6 +92,12 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($result->hasPages())
+        <div class="mt-3 pt-2 border-top">
+            {{ $result->links() }}
+        </div>
+        @endif
     </div>
 </div>
 
@@ -126,20 +131,13 @@ $(document).off('ajaxPageLoaded.temuanAudit').on('ajaxPageLoaded.temuanAudit', f
         $('#example2').DataTable().destroy();
     }
     $('#example2').DataTable({
+        paging: false,
+        info: false,
+        searching: false,
         lengthChange: false,
         ordering: false,
         language: {
-            search: "Cari:",
-            zeroRecords: "Tidak ada data ditemukan",
-            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-            infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
-            infoFiltered: "(disaring dari _MAX_ total data)",
-            paginate: {
-                first: "Pertama",
-                last: "Terakhir",
-                next: "Selanjutnya",
-                previous: "Sebelumnya"
-            }
+            zeroRecords: "Tidak ada data ditemukan"
         }
     });
 });
@@ -147,10 +145,12 @@ $(document).off('ajaxPageLoaded.temuanAudit').on('ajaxPageLoaded.temuanAudit', f
 // Trigger once in case page was loaded directly
 if ($.fn.DataTable && !$.fn.DataTable.isDataTable('#example2')) {
     $('#example2').DataTable({
+        paging: false,
+        info: false,
+        searching: false,
         lengthChange: false,
         ordering: false,
         language: {
-            search: "Cari:",
             zeroRecords: "Tidak ada data ditemukan"
         }
     });

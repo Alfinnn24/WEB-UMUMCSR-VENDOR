@@ -51,7 +51,7 @@
         <div class="d-flex align-items-center mb-3 gap-2 flex-wrap">
             <div>
                 <h5 class="mb-0 fw-bold">Daftar Laporan Tenaga Kerja</h5>
-                <small class="text-muted">Total {{ count($data) }} laporan</small>
+                <small class="text-muted">Total {{ $data->total() }} laporan</small>
             </div>
             <div class="ms-auto d-flex gap-2">
                 <input type="text" id="searchInput" class="form-control form-control-sm"
@@ -132,6 +132,12 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($data->hasPages())
+        <div class="mt-3 pt-2 border-top">
+            {{ $data->links() }}
+        </div>
+        @endif
     </div>
 </div>
 

@@ -67,9 +67,8 @@
         <div class="d-flex align-items-center mb-3 gap-2">
             <div>
                 <h6 class="fw-bold mb-0">Data Karyawan</h6>
-                <small class="text-muted">Menampilkan <strong>{{ count($data) }}</strong> karyawan</small>
+                <small class="text-muted">Menampilkan <strong>{{ $data->total() }}</strong> karyawan</small>
             </div>
-            <div class="ms-auto"><input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Cari nama / NIK / jabatan..." style="width:240px" onkeyup="filterTable()"></div>
         </div>
         <div class="table-responsive">
             <table class="table table-hover table-sm align-middle mb-0" id="tbl">
@@ -115,14 +114,11 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($data->hasPages())
+        <div class="mt-3 pt-2 border-top">
+            {{ $data->links() }}
+        </div>
+        @endif
     </div>
 </div>
-
-<script>
-function filterTable(){
-    const kw = document.getElementById('searchInput').value.toLowerCase();
-    document.querySelectorAll('#tbl tbody tr').forEach(function(tr) {
-        tr.style.display = tr.textContent.toLowerCase().includes(kw) ? '' : 'none';
-    });
-}
-</script>

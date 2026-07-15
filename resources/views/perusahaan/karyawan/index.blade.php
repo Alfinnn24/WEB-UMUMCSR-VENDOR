@@ -52,7 +52,7 @@
         <div class="d-flex align-items-center mb-3 gap-2 flex-wrap">
             <div>
                 <h5 class="mb-0 fw-bold">Daftar Karyawan Vendor</h5>
-                <small class="text-muted">Total {{ count($data) }} karyawan</small>
+                <small class="text-muted">Total {{ $data->total() }} karyawan</small>
             </div>
             <div class="ms-auto d-flex gap-2 flex-wrap">
                 <input type="text" id="searchInput" class="form-control form-control-sm"
@@ -91,7 +91,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                @if (count($data) === 0)
+                @if ($data->isEmpty())
                     <tr>
                         <td colspan="8" class="text-center text-muted py-5">
                             <i class="bx bx-user-x font-40 d-block mb-2"></i>
@@ -192,6 +192,12 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($data->hasPages())
+        <div class="mt-3 pt-2 border-top">
+            {{ $data->links() }}
+        </div>
+        @endif
     </div>
 </div>
 

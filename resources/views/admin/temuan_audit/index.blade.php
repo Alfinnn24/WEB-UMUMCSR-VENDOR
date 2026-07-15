@@ -212,6 +212,12 @@ Manajemen Temuan Audit CRUD dengan Modal AJAX & Filter (Tanpa Reload)
                 </tbody>
             </table>
         </div>
+
+        @if ($temuan->hasPages())
+        <div class="mt-3 pt-2 border-top">
+            {{ $temuan->links() }}
+        </div>
+        @endif
     </div>
 </div>
 

@@ -18,7 +18,8 @@ class LaporanTenagaKerjaController extends Controller
             ->where('perusahaan_id', $perusahaan_id)
             ->orderBy('tgl_laporan', 'desc')
             ->orderBy('id', 'desc')
-            ->get();
+            ->paginate(15, ['*'], 'p')
+            ->withQueryString();
 
         $view = 'perusahaan.laporan_tenaga_kerja.index';
         $params = ['data' => $data];

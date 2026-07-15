@@ -159,7 +159,7 @@
         <div class="d-flex align-items-center mb-3">
             <div>
                 <h6 class="fw-bold mb-0">Daftar Kontrak Kerja Perusahaan</h6>
-                <small class="text-muted">Menampilkan <strong>{{ count($data) }}</strong> data kontrak kerja</small>
+                <small class="text-muted">Menampilkan <strong>{{ $data->total() }}</strong> data kontrak kerja</small>
             </div>
         </div>
         
@@ -221,5 +221,11 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($data->hasPages())
+        <div class="mt-3 pt-2 border-top">
+            {{ $data->links() }}
+        </div>
+        @endif
     </div>
 </div>

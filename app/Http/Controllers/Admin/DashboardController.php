@@ -217,6 +217,7 @@ class DashboardController extends Controller
         $filter_perusahaan = (int)$request->query('perusahaan_id', 0);
         $filter_status     = trim($request->query('status', ''));
         $filter_file       = trim($request->query('file', ''));
+        $search            = trim($request->query('search', ''));
 
         $all_perusahaan = DB::table('users')->where('role', 'perusahaan')->orderBy('nama')->get();
 
@@ -228,11 +229,11 @@ class DashboardController extends Controller
             $countQuery->where('perusahaan_id', $filter_perusahaan);
         }
 
-        $stat_total = (clone $countQuery)->count();
-        $stat_aktif = (clone $countQuery)->where('tanggal_expired', '>', $tgl_30)->count();
-        $stat_hampir = (clone $countQuery)->where('tanggal_expired', '>', $today)->where('tanggal_expired', '<=', $tgl_30)->count();
+        $stat_total   = (clone $countQuery)->count();
+        $stat_aktif   = (clone $countQuery)->where('tanggal_expired', '>', $tgl_30)->count();
+        $stat_hampir  = (clone $countQuery)->where('tanggal_expired', '>', $today)->where('tanggal_expired', '<=', $tgl_30)->count();
         $stat_expired = (clone $countQuery)->where('tanggal_expired', '<=', $today)->count();
-        $stat_no_file = (clone $countQuery)->where(function($q) {
+        $stat_no_file = (clone $countQuery)->where(function ($q) {
             $q->whereNull('file_sertifikat')->orWhere('file_sertifikat', '');
         })->count();
 
@@ -248,8 +249,22 @@ class DashboardController extends Controller
         $query = DB::table('sertifikasi_karyawan as s')
             ->leftJoin('karyawan as k', 's.karyawan_id', '=', 'k.id')
             ->leftJoin('users as u', 's.perusahaan_id', '=', 'u.id')
-            ->select('s.*', 'k.nama as nama_karyawan', 'k.nik', 'k.jabatan', 'u.nama as nama_perusahaan',
-                DB::raw("DATEDIFF(s.tanggal_expired, '$today') as sisa_hari"));
+            ->select(
+                's.id',
+                's.nama_sertifikasi',
+                's.tanggal_sertifikasi',
+                's.masa_berlaku',
+                's.tanggal_expired',
+                's.lembaga_sertifikasi',
+                's.kota_pelaksanaan',
+                's.file_sertifikat',
+                's.nomor_sertifikat',
+                'k.nama as nama_karyawan',
+                'k.nik',
+                'k.jabatan',
+                'u.nama as nama_perusahaan',
+                DB::raw("DATEDIFF(s.tanggal_expired, '$today') as sisa_hari")
+            );
 
         if ($filter_perusahaan) {
             $query->where('s.perusahaan_id', $filter_perusahaan);
@@ -265,15 +280,25 @@ class DashboardController extends Controller
         if ($filter_file === 'ada') {
             $query->whereNotNull('s.file_sertifikat')->where('s.file_sertifikat', '!=', '');
         } elseif ($filter_file === 'tidak') {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->whereNull('s.file_sertifikat')->orWhere('s.file_sertifikat', '');
             });
         }
 
-        $data = $query->orderBy('s.tanggal_expired')->get();
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('k.nama', 'like', "%{$search}%")
+                  ->orWhere('u.nama', 'like', "%{$search}%")
+                  ->orWhere('s.nama_sertifikasi', 'like', "%{$search}%")
+                  ->orWhere('s.nomor_sertifikat', 'like', "%{$search}%")
+                  ->orWhere('s.lembaga_sertifikasi', 'like', "%{$search}%");
+            });
+        }
+
+        $data = $query->orderBy('s.tanggal_expired')->paginate(15, ['*'], 'p')->withQueryString();
 
         return compact(
-            'filter_perusahaan', 'filter_status', 'filter_file', 'all_perusahaan',
+            'filter_perusahaan', 'filter_status', 'filter_file', 'search', 'all_perusahaan',
             'stat_total', 'stat_aktif', 'stat_hampir', 'stat_expired', 'stat_no_file',
             'top_expired', 'data', 'today', 'tgl_30'
         );
@@ -328,7 +353,7 @@ class DashboardController extends Controller
             });
         }
 
-        $data = $query->orderByDesc('l.tgl_laporan')->orderByDesc('l.id')->get();
+        $data = $query->orderByDesc('l.tgl_laporan')->orderByDesc('l.id')->paginate(15, ['*'], 'p')->withQueryString();
 
         return compact(
             'filter_perusahaan', 'filter_file', 'filter_tahun', 'all_perusahaan',
@@ -386,7 +411,7 @@ class DashboardController extends Controller
             $query->where('k.tgl_mulai', '>', $today);
         }
 
-        $data = $query->orderBy('k.tgl_selesai')->orderByDesc('k.id')->get();
+        $data = $query->orderBy('k.tgl_selesai')->orderByDesc('k.id')->paginate(15, ['*'], 'p')->withQueryString();
 
         return compact(
             'filter_perusahaan', 'filter_status', 'all_perusahaan',
@@ -424,7 +449,7 @@ class DashboardController extends Controller
             $query->where('k.unit', $filter_unit);
         }
 
-        $data = $query->orderBy('u.nama')->orderBy('k.nama')->get();
+        $data = $query->orderBy('u.nama')->orderBy('k.nama')->paginate(15, ['*'], 'p')->withQueryString();
 
         return compact('filter_perusahaan', 'filter_status', 'filter_jk', 'filter_unit', 'all_perusahaan', 'data');
     }
@@ -460,7 +485,7 @@ class DashboardController extends Controller
             $query->where('s.tanggal_expired', '<=', $today);
         }
 
-        $data = $query->orderBy('u.nama')->orderBy('k.nama')->get();
+        $data = $query->orderBy('u.nama')->orderBy('k.nama')->paginate(15, ['*'], 'p')->withQueryString();
 
         $all_tahun = DB::table('sertifikasi_karyawan')
             ->whereNotNull('tanggal_sertifikasi')
@@ -502,17 +527,16 @@ class DashboardController extends Controller
             $query->where('u.id', $filter_perusahaan);
         }
 
-        $raw_data = $query->select('u.id as perusahaan_id', 'u.nama as nama_perusahaan', 'l.id as laporan_id', 'l.nomor_surat', 'l.tgl_laporan', 'l.file_laporan')
+        $data_flat = $query->select('u.id as perusahaan_id', 'u.nama as nama_perusahaan', 'l.id as laporan_id', 'l.nomor_surat', 'l.tgl_laporan', 'l.file_laporan')
             ->orderBy('u.nama')
             ->orderByDesc('l.tgl_laporan')
-            ->get();
+            ->paginate(15, ['*'], 'p')
+            ->withQueryString();
 
-        $data_flat = [];
-        foreach ($raw_data as $row) {
-            $status = empty($row->file_laporan) ? 'Belum Upload' : 'Sudah Upload';
-            $row->status_upload = $status;
-            $data_flat[] = $row;
-        }
+        $data_flat->getCollection()->transform(function ($row) {
+            $row->status_upload = empty($row->file_laporan) ? 'Belum Upload' : 'Sudah Upload';
+            return $row;
+        });
 
         return compact('filter_perusahaan', 'filter_tahun', 'all_perusahaan', 'all_tahun', 'data_flat');
     }
@@ -546,7 +570,7 @@ class DashboardController extends Controller
             $query->where('k.tgl_selesai', '<', $today);
         }
 
-        $data = $query->orderBy('u.nama')->orderBy('k.tgl_selesai')->get();
+        $data = $query->orderBy('u.nama')->orderBy('k.tgl_selesai')->paginate(15, ['*'], 'p')->withQueryString();
 
         return compact('filter_perusahaan', 'filter_status', 'all_perusahaan', 'data', 'today', 'tgl_30');
     }

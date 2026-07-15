@@ -31,7 +31,7 @@ class TemuanAuditController extends Controller
             $query->whereYear('t.tanggal_audit', $filter_tahun);
         }
 
-        $result = $query->orderByDesc('t.created_at')->get();
+        $result = $query->orderByDesc('t.created_at')->paginate(15, ['*'], 'p')->withQueryString();
 
         $view = 'perusahaan.temuan_audit.index';
         $data = [

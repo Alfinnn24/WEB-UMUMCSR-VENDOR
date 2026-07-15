@@ -20,7 +20,8 @@ class KontrakKerjaController extends Controller
             ->where('k.perusahaan_id', $perusahaan_id)
             ->orderBy('k.tgl_mulai', 'desc')
             ->orderBy('k.id', 'desc')
-            ->get();
+            ->paginate(15, ['*'], 'p')
+            ->withQueryString();
 
         $view = 'perusahaan.kontrak_kerja.index';
         $params = ['data' => $data];

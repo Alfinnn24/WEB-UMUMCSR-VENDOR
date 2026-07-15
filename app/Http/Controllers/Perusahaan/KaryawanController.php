@@ -28,7 +28,8 @@ class KaryawanController extends Controller
             ->select('k.*', 'd.div_desc', 's.subdiv_desc')
             ->where('k.perusahaan_id', $perusahaan_id)
             ->orderBy('k.id', 'DESC')
-            ->get();
+            ->paginate(15, ['*'], 'p')
+            ->withQueryString();
 
         if ($request->ajax()) {
             return view('perusahaan.karyawan.index', compact('data'));

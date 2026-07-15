@@ -31,39 +31,10 @@
     <title>{{ $pageTitle ?? 'Admin' }} - Karyawan &amp; Audit Monitoring</title>
 
     <style>
-        /* ── Slim AJAX progress bar (atas layar) ── */
-        #ajax-loader {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, #4f46e5, #0ea5e9, #10b981);
-            background-size: 200% 100%;
-            animation: shimmer 1.2s ease-in-out infinite;
-            z-index: 9999;
-        }
-
-        @keyframes shimmer {
-            0% {
-                background-position: 200% 0;
-            }
-
-            100% {
-                background-position: -200% 0;
-            }
-        }
-
-        /* ── Fade transition untuk konten ── */
+        /* ── Instant page transition (super cepat) ── */
         #page-content {
             position: relative;
-            transition: opacity 0.18s ease;
-        }
-
-        #page-content.ajax-fading {
-            opacity: 0.3;
-            pointer-events: none;
+            transition: opacity .06s ease;
         }
 
         /* ── Active menu highlight ── */
@@ -84,13 +55,117 @@
             font-size: .8rem;
             padding: 4px 10px;
         }
+
+        /* ── Pagination DataTables modern ── */
+        div.dataTables_wrapper div.dataTables_paginate .pagination .page-link {
+            padding: 4px 11px;
+            font-size: .8rem;
+            border-radius: 5px;
+            margin: 0 1px;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            transition: .15s ease;
+        }
+        div.dataTables_wrapper div.dataTables_paginate .pagination .page-link:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            z-index: 0;
+        }
+        div.dataTables_wrapper div.dataTables_paginate .pagination .page-item.active .page-link {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: #fff;
+            font-weight: 600;
+        }
+        div.dataTables_wrapper div.dataTables_paginate .pagination .page-item.disabled .page-link {
+            color: #9ca3af;
+            pointer-events: none;
+            background: #f9fafb;
+            border-color: #f3f4f6;
+        }
+
+        /* ── Custom Pagination Buttons (Previous / Next) ── */
+        .custom-pagination {
+            margin-top: 0;
+        }
+        .btn-pagination {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 18px;
+            font-size: .82rem;
+            font-weight: 600;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            color: #475569;
+            transition: all .25s cubic-bezier(.4,0,.2,1);
+            text-decoration: none;
+            cursor: pointer;
+            gap: 2px;
+        }
+        .btn-pagination:hover:not(.disabled) {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            color: #fff;
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(79,70,229,.35);
+        }
+        .btn-pagination:active:not(.disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(79,70,229,.25);
+        }
+        .btn-pagination.disabled {
+            opacity: .45;
+            cursor: not-allowed;
+            background: #f8fafc;
+            color: #94a3b8;
+            border-color: #e2e8f0;
+        }
+        .btn-pagination i {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+        .btn-pagination-next:hover:not(.disabled) {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+            border-color: #0ea5e9;
+            box-shadow: 0 4px 15px rgba(14,165,233,.35);
+        }
+        .pagination-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 14px;
+            font-size: .78rem;
+            font-weight: 700;
+            color: #4f46e5;
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            border-radius: 99px;
+            letter-spacing: .3px;
+            border: 1px solid #c7d2fe;
+            user-select: none;
+        }
+        .pagination-info {
+            line-height: 1.3;
+        }
+
+        /* ── Hilangkan ruang kosong dari wrapper DataTables ── */
+        div.dataTables_wrapper table.dataTable {
+            margin-bottom: 0 !important;
+        }
+        div.dataTables_wrapper div.dataTables_info:empty,
+        div.dataTables_wrapper div.dataTables_paginate:empty {
+            display: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        div.dataTables_wrapper > div.row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
     </style>
 </head>
 
 <body>
-    <!-- Top-bar loading indicator (3px bar di atas layar) -->
-    <div id="ajax-loader"></div>
-
     <!--wrapper-->
     <div class="wrapper">
 
@@ -327,118 +402,102 @@
     <script src="/assets/js/app_baru.js?v=3"></script>
 
     {{-- ═══════════════════════════════════════════════════════════
-    AJAX NAVIGATION ENGINE
-    Cara kerja:
-    1. Klik .nav-ajax → ambil data-url → $.ajax GET
-    2. Tampilkan spinner, sembunyikan konten lama
-    3. Setelah response → inject ke #page-content
-    4. history.pushState agar URL berubah tanpa reload
-    5. Browser back/forward → popstate → load ulang via AJAX
-    6. Request langsung (bukan AJAX) → Laravel render full page
+    INSTANT NAVIGATION ENGINE — zero reload, zero delay
+    - Page cache (session): visiting again = instant
+    - Hover prefetch: sidebar links loaded BEFORE click
+    - Instant swap: no loading bar, no fade wait
+    - history.pushState for back/forward
     ═══════════════════════════════════════════════════════════ --}}
     <script>
         $(function () {
+            const pageCache = new Map();
+            const $content = $('#page-content');
+            const csrf = $('meta[name="csrf-token"]').attr('content');
+            const TITLE_SUFFIX = ' - Karyawan & Audit Monitoring';
 
-            // ── Fungsi load halaman via AJAX ────────────────────────────────
-            function ajaxLoadPage(url, pageTitle, pushHistory) {
-                var $loader = $('#ajax-loader');
-                var $content = $('#page-content');
+            // ── Prefetch halaman di background ──────────────────────────────
+            function prefetch(url) {
+                if (!url || url === '#' || url === 'javascript:;' || pageCache.has(url)) return;
+                $.ajax({ url, type:'GET', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':csrf} })
+                 .done(function(html) { pageCache.set(url, html); });
+            }
 
-                // 1. Tampilkan progress bar tipis
-                $loader.show();
+            // ── Instant load — swap konten seketika ─────────────────────────
+            function instantLoad(url, pageTitle, pushHistory) {
+                if (!url || url === '#' || url === 'javascript:;') return;
 
-                // 2. Fade-out konten lama (cepat, 180ms)
-                $content.addClass('ajax-fading');
+                // Cache hit → zero delay
+                if (pageCache.has(url)) {
+                    applyContent(url, pageTitle, pushHistory, pageCache.get(url));
+                    return;
+                }
 
+                // Cache miss → opacity dip tipis (60ms) selama fetch
+                $content.css('opacity', '.5');
                 $.ajax({
-                    url: url,
-                    type: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    url, type:'GET',
+                    headers: {'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':csrf},
+                    success: function(html) {
+                        pageCache.set(url, html);
+                        applyContent(url, pageTitle, pushHistory, html);
                     },
-                    success: function (html) {
-                        // 3. Setelah fade-out selesai → ganti isi → fade-in
-                        setTimeout(function () {
-                            // Ganti konten
-                            $content.html(html);
-
-                            // Update title browser
-                            if (pageTitle) {
-                                document.title = pageTitle + ' - Karyawan & Audit Monitoring';
-                            }
-
-                            // Push state ke browser history
-                            if (pushHistory !== false) {
-                                history.pushState({ url: url, title: pageTitle }, pageTitle, url);
-                            }
-
-                            // 4. Fade-in konten baru
-                            $content.removeClass('ajax-fading');
-
-                            // 5. Scroll halus ke atas
-                            $('.page-wrapper').animate({ scrollTop: 0 }, 150);
-
-                            // Re-init DataTable & Charts
-                            reinitDataTables();
-                            reinitCharts();
-                            highlightActiveMenu(url);
-
-                            $loader.hide();
-                        }, 180); // tunggu fade-out CSS selesai
-                    },
-                    error: function (xhr) {
-                        $content.html(
-                            '<div class="alert alert-danger m-4">' +
-                            '<i class="bx bx-error-circle me-2"></i>' +
-                            'Gagal memuat halaman (' + xhr.status + '). Coba refresh atau hubungi Admin.' +
-                            '</div>'
-                        );
-                        $content.removeClass('ajax-fading');
-                        $loader.hide();
+                    error: function(xhr) {
+                        $content.css('opacity','1');
+                        $content.html('<div class="alert alert-danger m-4"><i class="bx bx-error-circle me-2"></i>Gagal memuat halaman ('+xhr.status+').</div>');
                     }
                 });
             }
+            window.ajaxLoadPage = instantLoad; // alias untuk kompatibilitas callback CRUD
 
-            // ── Event: klik link di sidebar / header ────────────────────────
+            // ── Terapkan konten ke halaman ──────────────────────────────────
+            function applyContent(url, pageTitle, pushHistory, html) {
+                $content.html(html).css('opacity', '1');
+                if (pageTitle) document.title = pageTitle + TITLE_SUFFIX;
+                if (pushHistory !== false) history.pushState({url,title:pageTitle}, pageTitle, url);
+                $('.page-wrapper').animate({ scrollTop: 0 }, 100);
+                reinitDataTables();
+                reinitCharts();
+                highlightActiveMenu(url);
+            }
+
+            // ── Prefetch sidebar saat hover ─────────────────────────────────
+            $(document).on('mouseenter', 'a.nav-ajax', function () {
+                const url = $(this).data('url') || $(this).attr('href');
+                if (url && !pageCache.has(url)) prefetch(url);
+            });
+
+            // ── Klik link sidebar / header ──────────────────────────────────
             $(document).on('click', 'a.nav-ajax', function (e) {
                 e.preventDefault();
                 const url = $(this).data('url') || $(this).attr('href');
                 const pageTitle = $(this).data('title') || '';
-
-                if (!url || url === '#' || url === 'javascript:;') return;
-
-                ajaxLoadPage(url, pageTitle, true);
+                instantLoad(url, pageTitle, true);
             });
 
-            // ── Event: browser back / forward ────────────────────────────────
+            // ── Browser back / forward ──────────────────────────────────────
             window.addEventListener('popstate', function (e) {
-                if (e.state && e.state.url) {
-                    ajaxLoadPage(e.state.url, e.state.title, false);
-                }
+                if (e.state && e.state.url) instantLoad(e.state.url, e.state.title, false);
             });
+            history.replaceState({url:window.location.href,title:document.title}, document.title, window.location.href);
 
-            // Simpan state awal (halaman pertama kali dibuka)
-            history.replaceState(
-                { url: window.location.href, title: document.title },
-                document.title,
-                window.location.href
-            );
-
-            // ── Highlight menu aktif berdasarkan URL ─────────────────────────
+            // ── Highlight menu aktif ────────────────────────────────────────
             function highlightActiveMenu(url) {
                 $('.metismenu a').removeClass('nav-link-active');
                 $('.metismenu a.nav-ajax').each(function () {
                     const linkUrl = $(this).data('url') || $(this).attr('href');
-                    if (linkUrl && url.includes(linkUrl)) {
-                        $(this).addClass('nav-link-active');
-                    }
+                    if (linkUrl && url.includes(linkUrl)) $(this).addClass('nav-link-active');
                 });
             }
-            // Highlight untuk halaman awal
             highlightActiveMenu(window.location.href);
 
-            // ── Re-init DataTables setelah AJAX inject ───────────────────────
+            // ── Prefetch semua sidebar di background (setelah halaman siap) ─
+            setTimeout(function () {
+                $('.nav-ajax[data-url]').each(function () {
+                    prefetch($(this).data('url'));
+                });
+            }, 800);
+
+            // ── Re-init DataTables setelah AJAX inject ──────────────────────
             function reinitDataTables() {
                 if ($.fn.DataTable) {
                     // Hancurkan instance lama dulu
@@ -453,6 +512,9 @@
                             $(this).DataTable().destroy();
                         }
                         $(this).DataTable({
+                            paging: false,
+                            info: false,
+                            searching: false,
                             lengthChange: false
                         });
                     });
@@ -620,6 +682,15 @@
                 ajaxLoadPage('/admin/dashboard?page=laporan_kontrak', 'Laporan Kontrak Kerja', true);
             });
 
+            // ── Pagination AJAX (server-side pagination links) ──
+            $(document).on('click', '.pagination a.page-link, .custom-pagination a.page-link', function (e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+                if (url) {
+                    ajaxLoadPage(url, document.title, true);
+                }
+            });
+
             // ── Alert auto-fade (hanya yang punya class alert-auto-dismiss) ──
             $(document).on('ajaxPageLoaded', function () {
                 window.setTimeout(function () {
@@ -669,11 +740,11 @@
                         $('#usersTable').DataTable().destroy();
                     }
                     $('#usersTable').DataTable({
+                        paging: false,
+                        info: false,
+                        searching: false,
                         language: {
-                            search: "Cari:",
-                            lengthMenu: "Tampilkan _MENU_ data",
-                            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                            paginate: { first: "Pertama", last: "Terakhir", next: "Lanjut", previous: "Kembali" }
+                            zeroRecords: "Tidak ada data ditemukan"
                         }
                     });
                 }
@@ -804,11 +875,11 @@
                         $('#informasiTable').DataTable().destroy();
                     }
                     $('#informasiTable').DataTable({
+                        paging: false,
+                        info: false,
+                        searching: false,
                         language: {
-                            search: "Cari:",
-                            lengthMenu: "Tampilkan _MENU_ data",
-                            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                            paginate: { first: "Pertama", last: "Terakhir", next: "Lanjut", previous: "Kembali" }
+                            zeroRecords: "Tidak ada data ditemukan"
                         }
                     });
                 }
@@ -1053,12 +1124,12 @@
                         $('#temuanTable').DataTable().destroy();
                     }
                     $('#temuanTable').DataTable({
-                        order: [[1, 'desc']], // Urutkan tanggal audit terbaru
+                        paging: false,
+                        info: false,
+                        searching: false,
+                        order: [[1, 'desc']],
                         language: {
-                            search: "Cari:",
-                            lengthMenu: "Tampilkan _MENU_ data",
-                            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                            paginate: { first: "Pertama", last: "Terakhir", next: "Lanjut", previous: "Kembali" }
+                            zeroRecords: "Tidak ada data ditemukan"
                         }
                     });
                 }
