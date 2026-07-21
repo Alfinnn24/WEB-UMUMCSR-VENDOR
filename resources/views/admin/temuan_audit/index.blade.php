@@ -122,7 +122,7 @@ Manajemen Temuan Audit CRUD dengan Modal AJAX & Filter (Tanpa Reload)
 <div class="card border-0 shadow-sm rounded-4 fade-in-up delay-3">
     <div class="card-body">
         <div class="table-responsive">
-            <table id="temuanTable" class="table table-striped table-hover align-middle mb-0">
+            <table id="temuanTable" class="table table-hover table-sm align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
                         <th width="5%">No</th>

@@ -36,7 +36,7 @@ Manajemen Users CRUD dengan Modal AJAX (Tanpa Reload)
                     <span class="badge bg-primary px-3 py-2 rounded-pill">{{ $users->total() }} Total User</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle mb-0" id="usersTable">
+                    <table class="table table-hover table-sm align-middle mb-0" id="usersTable">
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>

@@ -155,7 +155,7 @@ Ring Wilayah CRUD — HTML saja, TANPA <script>
                 </ul>
 
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle mb-0" id="ringTable">
+                    <table class="table table-hover table-sm align-middle mb-0" id="ringTable">
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>

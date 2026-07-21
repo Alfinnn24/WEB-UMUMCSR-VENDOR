@@ -36,7 +36,7 @@ Manajemen Informasi CRUD dengan Modal AJAX (Tanpa Reload)
                     <span class="badge bg-primary px-3 py-2 rounded-pill">{{ count($informasi) }} Total Data</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle mb-0" id="informasiTable">
+                    <table class="table table-hover table-sm align-middle mb-0" id="informasiTable">
                         <thead class="table-dark">
                             <tr>
                                 <th width="5%">#</th>

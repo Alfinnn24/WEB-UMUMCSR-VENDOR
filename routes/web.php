@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\InformasiController;
 
 use App\Http\Controllers\Admin\RingWilayahController;
 use App\Http\Controllers\Admin\TemuanAuditController;
+use App\Http\Controllers\Admin\PeraturanController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 
 // ─── Root redirect ───────────────────────────────────────────────────────────
@@ -52,6 +53,9 @@ Route::prefix('admin')->middleware('admin')->name('admin.')->group(function () {
     Route::post('/temuan-audit/{id}/close', [TemuanAuditController::class, 'close'])->name('temuan-audit.close');
     Route::resource('temuan-audit',        TemuanAuditController::class);
 
+    // Peraturan Perusahaan (read-only monitoring)
+    Route::get('/peraturan', [PeraturanController::class, 'index'])->name('peraturan.index');
+
     // Laporan exports
     Route::get('/laporan/export_ring_detail.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportRingDetail']);
     Route::get('/laporan/export_ring_wilayah.php', [\App\Http\Controllers\Admin\LaporanExportController::class, 'exportRingWilayah']);
@@ -64,6 +68,9 @@ Route::prefix('admin')->middleware('admin')->name('admin.')->group(function () {
     // ── Profile ──
     Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // ── BPJS Monitoring (Admin) ──
+    Route::get('/bpjs-monitoring', [DashboardController::class, 'bpjsMonitoring'])->name('bpjs-monitoring.index');
 
     // ── Modul yang akan ditambah di Modul 3+ ──
     // dst...
@@ -110,4 +117,12 @@ Route::prefix('perusahaan')->middleware('perusahaan')->name('perusahaan.')->grou
 
     // Informasi
     Route::resource('informasi', App\Http\Controllers\Perusahaan\InformasiController::class)->only(['index', 'show']);
+
+    // Peraturan Perusahaan
+    Route::post('/peraturan/{id}/set-active', [App\Http\Controllers\Perusahaan\PeraturanController::class, 'setActive'])->name('peraturan.set-active');
+    Route::resource('peraturan', App\Http\Controllers\Perusahaan\PeraturanController::class);
+
+    // Bukti Kepesertaan BPJS
+    Route::post('/bpjs/{id}/set-active', [App\Http\Controllers\Perusahaan\BpjsController::class, 'setActive'])->name('bpjs.set-active');
+    Route::resource('bpjs', App\Http\Controllers\Perusahaan\BpjsController::class);
 });

@@ -83,6 +83,8 @@
                         <li><a href="{{ route('perusahaan.kontrak-kerja.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.kontrak-kerja.index') }}" data-title="Kontrak Kerja"><i class="bx bxs-file-blank"></i>Kontrak Kerja</a></li>
                         <li><a href="{{ route('perusahaan.sertifikasi.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.sertifikasi.index') }}" data-title="Data Sertifikasi"><i class="bx bxs-tree"></i>Data Sertifikasi</a></li>
                         <li><a href="{{ route('perusahaan.laporan-tenaga-kerja.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.laporan-tenaga-kerja.index') }}" data-title="Laporan Tenaga Kerja"><i class="bx bxs-group"></i>Laporan Tenaga Kerja</a></li>
+                        <li><a href="{{ route('perusahaan.peraturan.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.peraturan.index') }}" data-title="Peraturan Perusahaan"><i class="bx bxs-book"></i>Peraturan Perusahaan</a></li>
+                        <li><a href="{{ route('perusahaan.bpjs.index') }}" class="nav-ajax" data-url="{{ route('perusahaan.bpjs.index') }}" data-title="Bukti Kepesertaan BPJS"><i class="bx bxs-shield"></i>Bukti Kepesertaan BPJS</a></li>
                     </ul>
                 </li>
                 <li class="menu-label">Informasi</li>

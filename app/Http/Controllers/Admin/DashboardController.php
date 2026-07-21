@@ -221,24 +221,57 @@ class DashboardController extends Controller
 
         $all_perusahaan = DB::table('users')->where('role', 'perusahaan')->orderBy('nama')->get();
 
-        $today = now()->toDateString();
+        $today  = now()->toDateString();
         $tgl_30 = now()->addDays(30)->toDateString();
 
-        $countQuery = DB::table('sertifikasi_karyawan');
+        /*
+         * Build a single filtered base query used for:
+         *   - stat cards (via clone + extra where)
+         *   - top expired (via clone + expired filter + group by)
+         *   - paginated table (via clone + select + order)
+         */
+        $base = DB::table('sertifikasi_karyawan as s')
+            ->leftJoin('karyawan as k', 's.karyawan_id', '=', 'k.id')
+            ->leftJoin('users as u', 's.perusahaan_id', '=', 'u.id');
+
         if ($filter_perusahaan) {
-            $countQuery->where('perusahaan_id', $filter_perusahaan);
+            $base->where('s.perusahaan_id', $filter_perusahaan);
+        }
+        if ($filter_status === 'aktif') {
+            $base->where('s.tanggal_expired', '>', $tgl_30);
+        } elseif ($filter_status === 'hampir') {
+            $base->where('s.tanggal_expired', '>', $today)->where('s.tanggal_expired', '<=', $tgl_30);
+        } elseif ($filter_status === 'expired') {
+            $base->where('s.tanggal_expired', '<=', $today);
+        }
+        if ($filter_file === 'ada') {
+            $base->whereNotNull('s.file_sertifikat')->where('s.file_sertifikat', '!=', '');
+        } elseif ($filter_file === 'tidak') {
+            $base->where(function ($q) {
+                $q->whereNull('s.file_sertifikat')->orWhere('s.file_sertifikat', '');
+            });
+        }
+        if ($search) {
+            $base->where(function ($q) use ($search) {
+                $q->where('k.nama', 'like', "%{$search}%")
+                  ->orWhere('u.nama', 'like', "%{$search}%")
+                  ->orWhere('s.nama_sertifikasi', 'like', "%{$search}%")
+                  ->orWhere('s.nomor_sertifikat', 'like', "%{$search}%")
+                  ->orWhere('s.lembaga_sertifikasi', 'like', "%{$search}%");
+            });
         }
 
-        $stat_total   = (clone $countQuery)->count();
-        $stat_aktif   = (clone $countQuery)->where('tanggal_expired', '>', $tgl_30)->count();
-        $stat_hampir  = (clone $countQuery)->where('tanggal_expired', '>', $today)->where('tanggal_expired', '<=', $tgl_30)->count();
-        $stat_expired = (clone $countQuery)->where('tanggal_expired', '<=', $today)->count();
-        $stat_no_file = (clone $countQuery)->where(function ($q) {
-            $q->whereNull('file_sertifikat')->orWhere('file_sertifikat', '');
+        // Stat cards — reflect the currently filtered data set
+        $stat_total   = (clone $base)->count();
+        $stat_aktif   = (clone $base)->where('s.tanggal_expired', '>', $tgl_30)->count();
+        $stat_hampir  = (clone $base)->where('s.tanggal_expired', '>', $today)->where('s.tanggal_expired', '<=', $tgl_30)->count();
+        $stat_expired = (clone $base)->where('s.tanggal_expired', '<=', $today)->count();
+        $stat_no_file = (clone $base)->where(function ($q) {
+            $q->whereNull('s.file_sertifikat')->orWhere('s.file_sertifikat', '');
         })->count();
 
-        $top_expired = DB::table('sertifikasi_karyawan as s')
-            ->join('users as u', 's.perusahaan_id', '=', 'u.id')
+        // Top expired — scoped to the same filters
+        $top_expired = (clone $base)
             ->where('s.tanggal_expired', '<=', $today)
             ->selectRaw('u.nama, COUNT(*) as jumlah')
             ->groupBy('s.perusahaan_id', 'u.nama')
@@ -246,9 +279,8 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $query = DB::table('sertifikasi_karyawan as s')
-            ->leftJoin('karyawan as k', 's.karyawan_id', '=', 'k.id')
-            ->leftJoin('users as u', 's.perusahaan_id', '=', 'u.id')
+        // Paginated table data
+        $data = (clone $base)
             ->select(
                 's.id',
                 's.nama_sertifikasi',
@@ -264,38 +296,10 @@ class DashboardController extends Controller
                 'k.jabatan',
                 'u.nama as nama_perusahaan',
                 DB::raw("DATEDIFF(s.tanggal_expired, '$today') as sisa_hari")
-            );
-
-        if ($filter_perusahaan) {
-            $query->where('s.perusahaan_id', $filter_perusahaan);
-        }
-        if ($filter_status === 'aktif') {
-            $query->where('s.tanggal_expired', '>', $tgl_30);
-        } elseif ($filter_status === 'hampir') {
-            $query->where('s.tanggal_expired', '>', $today)->where('s.tanggal_expired', '<=', $tgl_30);
-        } elseif ($filter_status === 'expired') {
-            $query->where('s.tanggal_expired', '<=', $today);
-        }
-
-        if ($filter_file === 'ada') {
-            $query->whereNotNull('s.file_sertifikat')->where('s.file_sertifikat', '!=', '');
-        } elseif ($filter_file === 'tidak') {
-            $query->where(function ($q) {
-                $q->whereNull('s.file_sertifikat')->orWhere('s.file_sertifikat', '');
-            });
-        }
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('k.nama', 'like', "%{$search}%")
-                  ->orWhere('u.nama', 'like', "%{$search}%")
-                  ->orWhere('s.nama_sertifikasi', 'like', "%{$search}%")
-                  ->orWhere('s.nomor_sertifikat', 'like', "%{$search}%")
-                  ->orWhere('s.lembaga_sertifikasi', 'like', "%{$search}%");
-            });
-        }
-
-        $data = $query->orderBy('s.tanggal_expired')->paginate(15, ['*'], 'p')->withQueryString();
+            )
+            ->orderBy('s.tanggal_expired')
+            ->paginate(15, ['*'], 'p')
+            ->withQueryString();
 
         return compact(
             'filter_perusahaan', 'filter_status', 'filter_file', 'search', 'all_perusahaan',
@@ -665,4 +669,75 @@ class DashboardController extends Controller
 
         return compact('all_perusahaan', 'data', 'grand_ring1', 'grand_ring2', 'grand_ring3', 'grand_ring4', 'grand_no', 'grand_total');
     }
+
+    public function bpjsMonitoring(Request $request)
+    {
+        $search = trim($request->query('search', ''));
+        $filter_status = trim($request->query('status', ''));
+
+        $all_perusahaan = DB::table('users')->where('role', 'perusahaan')->orderBy('nama')->get();
+
+        $query = DB::table('users as u')
+            ->where('u.role', 'perusahaan')
+            ->leftJoin('bukti_kepesertaan_bpjs as bpjs_kes', function ($join) {
+                $join->on('u.id', '=', 'bpjs_kes.perusahaan_id')
+                    ->where('bpjs_kes.kategori', '=', 'kesehatan');
+            })
+            ->leftJoin('bukti_kepesertaan_bpjs as bpjs_tk', function ($join) {
+                $join->on('u.id', '=', 'bpjs_tk.perusahaan_id')
+                    ->where('bpjs_tk.kategori', '=', 'ketenagakerjaan');
+            })
+            ->select('u.id', 'u.nama as nama_perusahaan',
+                'bpjs_kes.file as bpjs_kes_file',
+                'bpjs_tk.file as bpjs_tk_file');
+
+        if ($search) {
+            $query->where('u.nama', 'like', "%{$search}%");
+        }
+
+        $statusFilter = function ($q) use ($filter_status) {
+            if ($filter_status === 'uploaded') {
+                $q->whereNotNull('bpjs_kes.file')->where('bpjs_kes.file', '!=', '')
+                    ->orWhereNotNull('bpjs_tk.file')->where('bpjs_tk.file', '!=', '');
+            } elseif ($filter_status === 'not_uploaded') {
+                $q->where(function ($qq) {
+                    $qq->whereNull('bpjs_kes.file')->orWhere('bpjs_kes.file', '');
+                })->where(function ($qq) {
+                    $qq->whereNull('bpjs_tk.file')->orWhere('bpjs_tk.file', '');
+                });
+            }
+        };
+
+        if ($filter_status) {
+            $query->where($statusFilter);
+        }
+
+        $data = $query->orderBy('u.nama')->paginate(15, ['*'], 'p')->withQueryString();
+
+        $data->getCollection()->transform(function ($row) {
+            $row->bpjs_kes_status = !empty($row->bpjs_kes_file) ? 'Sudah Upload' : 'Belum Upload';
+            $row->bpjs_tk_status = !empty($row->bpjs_tk_file) ? 'Sudah Upload' : 'Belum Upload';
+            return $row;
+        });
+
+        $params = compact(
+            'search', 'filter_status',
+            'all_perusahaan', 'data'
+        );
+
+        if ($request->query('partial') === 'table') {
+            return view('admin.bpjs_monitoring.partials.table', $params)->render();
+        }
+
+        if ($request->ajax()) {
+            return view('admin.bpjs_monitoring.index', $params);
+        }
+
+        return view('layouts.admin', array_merge($params, [
+            'page' => 'admin.bpjs_monitoring.index',
+            'pageTitle' => 'Bukti Kepesertaan BPJS Perusahaan',
+        ]));
+    }
+
+
 }

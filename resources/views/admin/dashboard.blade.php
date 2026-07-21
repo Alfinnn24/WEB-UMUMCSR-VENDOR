@@ -4,8 +4,9 @@
     Jika diakses langsung (non-AJAX), DashboardController akan wrap dengan layouts.admin
 --}}
 
-{{-- ── CSS Dashboard (sama persis dengan home.php) ──────────────────────── --}}
-<style>
+{{-- ── CSS Dashboard ─────────────────────────────────────────────────────── --}}
+@unless (request()->ajax())
+<style id="dashboard-base-css">
 .modern-card {
     background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
     border: 1px solid rgba(0,0,0,0.04); border-radius: 16px;
@@ -103,6 +104,45 @@
 .delay-4 { animation-delay: 0.20s; }
 .delay-5 { animation-delay: 0.25s; }
 </style>
+@endunless
+
+<script>
+(function(){
+    var id = 'dash-persist-css';
+    if (document.getElementById(id)) return;
+    var src = document.getElementById('dashboard-base-css');
+    var cssText = src ? src.textContent :
+`.modern-card{background:linear-gradient(145deg,#fff 0%,#f8f9fa 100%);border:1px solid rgba(0,0,0,0.04);border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06),0 1px 4px rgba(0,0,0,0.04);transition:all 0.35s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}
+.modern-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;background:linear-gradient(90deg,var(--card-glow,#0d6efd),var(--card-glow-to,#0dcaf0));opacity:0;transition:opacity 0.35s ease}
+.modern-card:hover::before{opacity:1}.modern-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.12)}
+.stat-card:hover .stat-icon-wrapper{transform:scale(1.08) rotate(3deg)}
+.stat-icon-wrapper{transition:all 0.4s cubic-bezier(0.4,0,0.2,1);border-radius:14px;display:flex;align-items:center;justify-content:center}
+.stat-icon-gradient{background:linear-gradient(135deg,var(--bg-color) 0%,var(--bg-dark) 100%);box-shadow:0 4px 15px var(--shadow-color)}
+.pulse-alert{animation:pulseAlert 2s ease-in-out infinite}
+@keyframes pulseAlert{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+.ring-card{background:linear-gradient(145deg,#fff 0%,#f8fafc 100%);border-radius:14px;border:1px solid rgba(0,0,0,0.05);transition:all 0.3s ease}
+.ring-card:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,0,0,0.08)}
+.ring-card.ring-1{border-left:4px solid #1e293b}.ring-card.ring-2{border-left:4px solid #475569}
+.ring-card.ring-3{border-left:4px solid #94a3b8}.ring-card.ring-4{border-left:4px solid #cbd5e1}
+.ring-card.ring-none{border-left:4px solid #94a3b8}
+.progress-enhanced{height:10px;border-radius:99px;background:#e9ecef;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.05)}
+.progress-enhanced .progress-bar{border-radius:99px;background:linear-gradient(90deg,var(--bar-color) 0%,var(--bar-light) 100%);box-shadow:0 2px 8px var(--bar-shadow);transition:width 1s cubic-bezier(0.4,0,0.2,1)}
+.section-header{position:relative;padding-bottom:8px}
+.section-header::after{content:'';position:absolute;bottom:0;left:0;width:40px;height:3px;border-radius:2px;background:linear-gradient(90deg,#0d6efd,#0dcaf0)}
+.avatar-circle{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700}
+.badge-enhanced{padding:4px 10px;font-weight:500;border-radius:99px}
+.table-modern th{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:2px solid #e9ecef;padding:10px 8px}
+.table-modern td{padding:10px 8px;vertical-align:middle;border-color:#f1f5f9}
+.table-modern tbody tr{transition:all .2s ease}
+.table-modern tbody tr:hover{background:rgba(0,0,0,0.02);transform:translateX(4px)}
+.ring-legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%}`;
+    cssText += '#page-content{opacity:1!important;transition:none!important}.fade-in-up{animation:none!important}';
+    var s = document.createElement('style');
+    s.id = id;
+    s.textContent = cssText;
+    document.head.appendChild(s);
+})();
+</script>
 
 {{-- ── Breadcrumb ────────────────────────────────────────────────────────── --}}
 <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-4 fade-in-up">

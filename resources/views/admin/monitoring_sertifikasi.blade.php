@@ -1,4 +1,5 @@
-<style>
+@unless (request()->ajax())
+<style id="sertifikasi-base-css">
 .modern-card {
     background: #fff;
     border: 1px solid rgba(0,0,0,0.04);
@@ -84,28 +85,38 @@
     70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
     100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
-.table-modern th {
-    background: #212529;
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.72rem;
-    letter-spacing: 0.3px;
-    padding: 12px 10px;
-    border-bottom: 2px solid #2c3034;
-}
-.table-modern td {
-    padding: 14px 10px;
-    vertical-align: middle;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.85rem;
-}
-.table-modern tbody tr:hover {
-    background: #f8f9fa;
-}
-.table-modern tbody tr:last-child td {
-    border-bottom: none;
-}
+
 </style>
+@endunless
+
+<script>
+(function(){
+    var id = 'sertifikasi-persist-css';
+    if (document.getElementById(id)) return;
+    var src = document.getElementById('sertifikasi-base-css');
+    var cssText = src ? src.textContent :
+`.modern-card{background:#fff;border:1px solid rgba(0,0,0,0.04);border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06),0 1px 4px rgba(0,0,0,0.04);transition:all 0.35s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}
+.modern-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.12),0 4px 12px rgba(0,0,0,0.08)}
+.stat-card:hover .stat-icon-wrapper{transform:scale(1.08) rotate(3deg)}
+.stat-icon-wrapper{transition:all 0.4s cubic-bezier(0.4,0,0.2,1);border-radius:14px;display:flex;align-items:center;justify-content:center}
+.stat-icon-gradient{background:linear-gradient(135deg,var(--bg-color) 0%,var(--bg-dark) 100%);box-shadow:0 4px 15px var(--shadow-color)}
+.badge-enhanced{padding:6px 12px;border-radius:99px;font-weight:600;font-size:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.btn-enhanced{border-radius:10px;font-weight:500;transition:all 0.25s ease}
+.btn-enhanced:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.15)}
+.section-header{position:relative;padding-bottom:8px}
+.section-header::after{content:'';position:absolute;bottom:0;left:0;width:40px;height:3px;border-radius:2px;background:linear-gradient(90deg,#0d6efd,#0dcaf0)}
+.top-item{background:linear-gradient(145deg,#fff 0%,#fafafa 100%);border-radius:10px;padding:10px 12px;transition:all 0.2s ease;border:1px solid rgba(0,0,0,0.03)}
+.top-item:hover{transform:translateX(4px);box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+.pulse-alert{animation:pulse-ring 2s infinite}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(220,53,69,0.4)}70%{box-shadow:0 0 0 10px rgba(220,53,69,0)}100%{box-shadow:0 0 0 0 rgba(220,53,69,0)}}
+`;
+    cssText += '#page-content{opacity:1!important;transition:none!important}.fade-in-up{animation:none!important}';
+    var s = document.createElement('style');
+    s.id = id;
+    s.textContent = cssText;
+    document.head.appendChild(s);
+})();
+</script>
 
 <!-- Breadcrumb -->
 <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-4 fade-in-up">
@@ -128,12 +139,12 @@
 </div>
 
 <!-- Stat Cards -->
-<div class="row row-cols-2 row-cols-md-3 row-cols-xl-5 g-3 mb-4">
+<div id="sertifikasiStatCards" class="row row-cols-2 row-cols-md-3 row-cols-xl-5 g-3 mb-4">
 
     {{-- Total --}}
     <div class="col fade-in-up delay-1">
-        <a href="{{ route('admin.dashboard') }}?page=monitoring_sertifikasi{{ $filter_perusahaan ? '&perusahaan_id='.$filter_perusahaan : '' }}" class="text-decoration-none nav-ajax">
-        <div class="card h-100 modern-card stat-card" style="{{ !$filter_status && !$filter_file ? 'border:2px solid #4f46e5' : '' }}">
+        <div class="card h-100 modern-card stat-card" role="button" data-filter-status="" data-filter-file=""
+             style="{{ !$filter_status && !$filter_file ? 'border:2px solid #4f46e5' : '' }}">
             <div class="card-body p-0">
                 <div class="d-flex align-items-center">
                     <div class="stat-icon-wrapper stat-icon-gradient m-3"
@@ -150,13 +161,12 @@
                 <small class="text-primary" style="font-size:.7rem"><i class="bx bx-list-ul me-1"></i>Semua sertifikasi</small>
             </div>
         </div>
-        </a>
     </div>
 
     {{-- Aktif --}}
     <div class="col fade-in-up delay-1">
-        <a href="{{ route('admin.dashboard') }}?page=monitoring_sertifikasi&status=aktif{{ $filter_perusahaan ? '&perusahaan_id='.$filter_perusahaan : '' }}" class="text-decoration-none nav-ajax">
-        <div class="card h-100 modern-card stat-card" style="{{ $filter_status === 'aktif' ? 'border:2px solid #10b981' : '' }}">
+        <div class="card h-100 modern-card stat-card" role="button" data-filter-status="aktif" data-filter-file=""
+             style="{{ $filter_status === 'aktif' ? 'border:2px solid #10b981' : '' }}">
             <div class="card-body p-0">
                 <div class="d-flex align-items-center">
                     <div class="stat-icon-wrapper stat-icon-gradient m-3"
@@ -173,13 +183,12 @@
                 <small class="text-success" style="font-size:.7rem"><i class="bx bx-check-shield me-1"></i>> 30 hari</small>
             </div>
         </div>
-        </a>
     </div>
 
     {{-- Hampir Expired --}}
     <div class="col fade-in-up delay-1">
-        <a href="{{ route('admin.dashboard') }}?page=monitoring_sertifikasi&status=hampir{{ $filter_perusahaan ? '&perusahaan_id='.$filter_perusahaan : '' }}" class="text-decoration-none nav-ajax">
-        <div class="card h-100 modern-card stat-card" style="{{ $filter_status === 'hampir' ? 'border:2px solid #f59e0b' : '' }}">
+        <div class="card h-100 modern-card stat-card" role="button" data-filter-status="hampir" data-filter-file=""
+             style="{{ $filter_status === 'hampir' ? 'border:2px solid #f59e0b' : '' }}">
             <div class="card-body p-0">
                 <div class="d-flex align-items-center">
                     <div class="stat-icon-wrapper stat-icon-gradient m-3"
@@ -196,13 +205,12 @@
                 <small class="text-warning" style="font-size:.7rem"><i class="bx bx-time me-1"></i>≤ 30 hari</small>
             </div>
         </div>
-        </a>
     </div>
 
     {{-- Expired --}}
     <div class="col fade-in-up delay-1">
-        <a href="{{ route('admin.dashboard') }}?page=monitoring_sertifikasi&status=expired{{ $filter_perusahaan ? '&perusahaan_id='.$filter_perusahaan : '' }}" class="text-decoration-none nav-ajax">
-        <div class="card h-100 modern-card stat-card" style="{{ $filter_status === 'expired' ? 'border:2px solid #ef4444' : '' }}">
+        <div class="card h-100 modern-card stat-card" role="button" data-filter-status="expired" data-filter-file=""
+             style="{{ $filter_status === 'expired' ? 'border:2px solid #ef4444' : '' }}">
             <div class="card-body p-0">
                 <div class="d-flex align-items-center">
                     <div class="stat-icon-wrapper stat-icon-gradient m-3"
@@ -219,13 +227,12 @@
                 <small class="text-danger" style="font-size:.7rem"><i class="bx bx-error-alt me-1"></i>Kedaluwarsa</small>
             </div>
         </div>
-        </a>
     </div>
 
     {{-- Belum Upload --}}
     <div class="col fade-in-up delay-1">
-        <a href="{{ route('admin.dashboard') }}?page=monitoring_sertifikasi&file=tidak{{ $filter_perusahaan ? '&perusahaan_id='.$filter_perusahaan : '' }}" class="text-decoration-none nav-ajax">
-        <div class="card h-100 modern-card stat-card" style="{{ $filter_file === 'tidak' ? 'border:2px solid #64748b' : '' }}">
+        <div class="card h-100 modern-card stat-card" role="button" data-filter-status="" data-filter-file="tidak"
+             style="{{ $filter_file === 'tidak' ? 'border:2px solid #64748b' : '' }}">
             <div class="card-body p-0">
                 <div class="d-flex align-items-center">
                     <div class="stat-icon-wrapper stat-icon-gradient m-3"
@@ -242,16 +249,26 @@
                 <small class="text-secondary" style="font-size:.7rem"><i class="bx bx-file me-1"></i>File belum ada</small>
             </div>
         </div>
-        </a>
     </div>
 
 </div>
+
+<style>
+/* Filter card: remove overflow hidden that can clip native select dropdowns,
+   remove hover transform that interferes with pointer targeting */
+.col-md-7.fade-in-up.delay-2 > .modern-card {
+    overflow: visible;
+}
+.col-md-7.fade-in-up.delay-2 > .modern-card:hover {
+    transform: none;
+}
+</style>
 
 <!-- Row: Top Expired + Filter -->
 <div class="row g-4 mb-4">
 
     {{-- Top Perusahaan Expired --}}
-    <div class="col-md-5 fade-in-up delay-2">
+    <div id="sertifikasiTopExpired" class="col-md-5 fade-in-up delay-2">
         <div class="card modern-card h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3 mb-4">
@@ -305,7 +322,7 @@
                         <small class="text-muted">Sesuaikan tampilan data sertifikasi</small>
                     </div>
                 </div>
-                <form method="GET" action="{{ route('admin.dashboard') }}" id="filterSertifikasiForm">
+                <form method="GET" action="{{ route('admin.dashboard') }}" id="sertifikasiFilterForm">
                     <input type="hidden" name="page" value="monitoring_sertifikasi">
                     <input type="hidden" name="search" id="searchHidden" value="{{ $search ?? '' }}">
                     <div class="row g-3">
@@ -340,12 +357,12 @@
                         </div>
 
                         <div class="col-12 d-flex gap-2">
-                            <button type="submit" class="btn btn-primary px-4 btn-enhanced">
+                            <button type="button" class="btn btn-primary px-4 btn-enhanced" id="btnFilterSertifikasi">
                                 <i class="bx bx-search me-1"></i> Terapkan Filter
                             </button>
-                            <a href="{{ route('admin.dashboard') }}?page=monitoring_sertifikasi" class="btn btn-outline-secondary px-4 btn-enhanced nav-ajax">
+                            <button type="button" class="btn btn-outline-secondary px-4 btn-enhanced" id="btnResetSertifikasi">
                                 <i class="bx bx-reset me-1"></i> Reset
-                            </a>
+                            </button>
                         </div>
 
                     </div>
@@ -357,19 +374,15 @@
 </div>
 
 <!-- Tabel Data -->
-<div class="card modern-card fade-in-up delay-2">
+<div id="sertifikasiTableWrap">
+<div class="card border-0 shadow-sm rounded-4">
     <div class="card-body">
-        <div class="d-flex align-items-center mb-4 gap-2 flex-wrap">
-            <div class="d-flex align-items-center gap-3">
-                <div class="rounded-3 p-3" style="background:linear-gradient(135deg,#8b5cf6 0%,#a855f7 100%);">
-                    <i class="bx bx-list-ul fs-2 text-white"></i>
-                </div>
-                <div>
-                    <h6 class="fw-bold mb-0 section-header">Data Sertifikasi</h6>
-                    <small class="text-muted">
-                        Menampilkan <strong>{{ $data->firstItem() ?? 0 }}–{{ $data->lastItem() ?? 0 }}</strong> dari <strong>{{ $data->total() }}</strong> data
-                    </small>
-                </div>
+        <div class="d-flex align-items-center mb-3 gap-2 flex-wrap">
+            <div>
+                <h6 class="fw-bold mb-0">Data Sertifikasi</h6>
+                <small class="text-muted">
+                    Menampilkan <strong>{{ $data->firstItem() ?? 0 }}–{{ $data->lastItem() ?? 0 }}</strong> dari <strong>{{ $data->total() }}</strong> data
+                </small>
             </div>
             <div class="ms-auto">
                 <input type="text" id="searchInput" class="form-control form-control-sm"
@@ -379,8 +392,8 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-modern align-middle mb-0">
-                <thead>
+            <table class="table table-hover table-sm align-middle mb-0">
+                <thead class="table-dark">
                     <tr>
                         <th width="40">No</th>
                         <th>Perusahaan</th>
@@ -396,8 +409,8 @@
                 <tbody>
                 @if ($data->isEmpty())
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-5">
-                            <i class="bx bx-certification fs-1 d-block mb-2"></i>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bx bx-certification fs-3 d-block mb-2"></i>
                             Tidak ada data ditemukan.
                         </td>
                     </tr>
@@ -406,61 +419,45 @@
                         @php
                             $sisa = (int)$r->sisa_hari;
                             if ($sisa < 0) {
-                                $badgeBg = '#ef4444';
+                                $badgeClass = 'danger';
                                 $badgeLabel = 'Expired';
                                 $badgeIcon = 'bx-x-circle';
-                                $badgeClass = 'danger';
                             } elseif ($sisa <= 30) {
-                                $badgeBg = '#f59e0b';
+                                $badgeClass = 'warning';
                                 $badgeLabel = 'Hampir Exp.';
                                 $badgeIcon = 'bx-error';
-                                $badgeClass = 'warning';
                             } else {
-                                $badgeBg = '#10b981';
+                                $badgeClass = 'success';
                                 $badgeLabel = 'Aktif';
                                 $badgeIcon = 'bx-check-circle';
-                                $badgeClass = 'success';
                             }
                             $adaFile = !empty($r->file_sertifikat);
                         @endphp
                         <tr>
                             <td class="text-muted small">{{ $data->firstItem() + $loop->index }}</td>
+                            <td><small class="fw-semibold">{{ $r->nama_perusahaan ?? '-' }}</small></td>
                             <td>
-                                <span class="fw-semibold small d-inline-block text-truncate" style="max-width:130px"
-                                      title="{{ $r->nama_perusahaan ?? '-' }}">
-                                    {{ $r->nama_perusahaan ?? '-' }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="fw-semibold small">{{ $r->nama_karyawan ?? '-' }}</div>
-                                <small class="text-muted">{{ $r->nik ?? '' }}</small>
-                            </td>
-                            <td>
-                                <div class="fw-semibold small text-truncate" style="max-width:160px"
-                                     title="{{ $r->nama_sertifikasi }}">
-                                    {{ $r->nama_sertifikasi }}
-                                </div>
-                                @if (!empty($r->kota_pelaksanaan))
-                                <small class="text-muted"><i class="bx bx-map-pin me-1"></i>{{ $r->kota_pelaksanaan }}</small>
+                                <small class="fw-semibold">{{ $r->nama_karyawan ?? '-' }}</small>
+                                @if (!empty($r->nik))
+                                <br><small class="text-muted">{{ $r->nik }}</small>
                                 @endif
                             </td>
                             <td>
-                                <small class="d-inline-block text-truncate" style="max-width:130px"
-                                       title="{{ $r->lembaga_sertifikasi }}">
-                                    {{ $r->lembaga_sertifikasi }}
-                                </small>
+                                <small class="fw-semibold">{{ $r->nama_sertifikasi }}</small>
+                                @if (!empty($r->kota_pelaksanaan))
+                                <br><small class="text-muted"><i class="bx bx-map-pin me-1"></i>{{ $r->kota_pelaksanaan }}</small>
+                                @endif
                             </td>
-                            <td>
-                                <small>{{ $r->tanggal_sertifikasi ? date('d M Y', strtotime($r->tanggal_sertifikasi)) : '-' }}</small>
-                            </td>
+                            <td><small>{{ $r->lembaga_sertifikasi }}</small></td>
+                            <td><small>{{ $r->tanggal_sertifikasi ? date('d M Y', strtotime($r->tanggal_sertifikasi)) : '-' }}</small></td>
                             <td>
                                 <span class="badge bg-light text-dark border">{{ $r->masa_berlaku }} Bulan</span>
                             </td>
                             <td>
-                                <span class="badge badge-enhanced" style="background:{{ $badgeBg }};">
+                                <span class="badge bg-{{ $badgeClass }} rounded-pill px-2">
                                     <i class="bx {{ $badgeIcon }} me-1"></i>{{ $badgeLabel }}
                                 </span>
-                                <div class="mt-1" style="font-size:.72rem">
+                                <div style="font-size:.72rem">
                                     @if ($sisa < 0)
                                         <span class="text-danger fw-semibold">{{ abs($sisa) }} hari lalu</span>
                                     @elseif ($sisa <= 30)
@@ -473,11 +470,11 @@
                             <td class="text-center">
                                 @if ($adaFile)
                                     <a href="/uploads/sertifikasi/{{ $r->file_sertifikat }}"
-                                       target="_blank" class="btn btn-sm btn-outline-success btn-enhanced" title="Lihat File">
+                                       target="_blank" class="btn btn-sm btn-outline-success py-0 px-2" title="Lihat File">
                                         <i class="bx bx-file"></i>
                                     </a>
                                 @else
-                                    <span class="badge bg-light text-secondary border" style="font-size:.72rem">Belum</span>
+                                    <span class="text-muted small">—</span>
                                 @endif
                             </td>
                         </tr>
@@ -487,27 +484,85 @@
             </table>
         </div>
 
+        @if ($data->hasPages())
         <div class="mt-3 pt-2 border-top">
             {{ $data->links() }}
         </div>
+        @endif
     </div>
+</div>
 </div>
 
 <script>
-$(function () {
-    var $searchInput = $('#searchInput');
-    var $searchHidden = $('#searchHidden');
+$(document).on('submit', '#sertifikasiFilterForm', function(e) {
+    e.preventDefault();
+    sertifikasiLoad();
+});
+$(document).on('change', '#sertifikasiFilterForm select', function() {
+    sertifikasiLoad();
+});
+$(document).on('keyup', '#searchInput', function() {
+    clearTimeout(window._sertifSearchTimer);
+    var val = this.value;
+    $('#searchHidden').val(val);
+    window._sertifSearchTimer = setTimeout(sertifikasiLoad, 500);
+});
+$(document).on('click', '#btnFilterSertifikasi', function(e) {
+    e.preventDefault();
+    $('#searchHidden').val($('#searchInput').val());
+    sertifikasiLoad();
+});
+$(document).on('click', '#sertifikasiStatCards .stat-card[role="button"]', function() {
+    var f = document.getElementById('sertifikasiFilterForm');
+    if (!f) return;
+    f.querySelector('[name="status"]').value = $(this).data('filter-status') || '';
+    f.querySelector('[name="file"]').value = $(this).data('filter-file') || '';
+    sertifikasiLoad();
+});
+$(document).on('click', '#btnResetSertifikasi', function() {
+    var f = document.getElementById('sertifikasiFilterForm');
+    if (!f) return;
+    f.reset();
+    f.querySelector('[name="perusahaan_id"]').value = '';
+    f.querySelector('[name="status"]').value = '';
+    f.querySelector('[name="file"]').value = '';
+    $('#searchInput').val('');
+    $('#searchHidden').val('');
+    sertifikasiLoad();
+});
+var _sertifikasiCache = {};
+$('#searchHidden').val() && $('#searchInput').val($('#searchHidden').val());
 
-    if ($searchHidden.val()) {
-        $searchInput.val($searchHidden.val());
-    }
+function setSertifikasiContent(html) {
+    var $doc = $(html);
+    var $stats = $doc.find('#sertifikasiStatCards');
+    var $top = $doc.find('#sertifikasiTopExpired');
+    var $table = $doc.find('#sertifikasiTableWrap');
+    if ($stats.length) $('#sertifikasiStatCards').replaceWith($stats);
+    if ($top.length) $('#sertifikasiTopExpired').replaceWith($top);
+    if ($table.length) $('#sertifikasiTableWrap').replaceWith($table);
+}
 
-    $searchInput.on('keypress', function (e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            $searchHidden.val($(this).val());
-            $('#filterSertifikasiForm').submit();
+function sertifikasiLoad() {
+    var f = document.getElementById('sertifikasiFilterForm');
+    if (!f) return;
+    var params = new URLSearchParams(new FormData(f)).toString();
+    sertifikasiLoadUrl(f.action + '?' + params);
+}
+
+function sertifikasiLoadUrl(url) {
+    if (!url) return;
+    if (_sertifikasiCache[url]) { setSertifikasiContent(_sertifikasiCache[url]); history.pushState(null, '', url); return; }
+    $.ajax({
+        url: url,
+        type: 'GET',
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        success: function(html) {
+            _sertifikasiCache[url] = html;
+            setSertifikasiContent(html);
+            history.pushState(null, '', url);
         }
     });
-});
+}
+
 </script>

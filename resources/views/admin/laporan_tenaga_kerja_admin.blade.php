@@ -61,7 +61,7 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-striped table-hover table-sm align-middle mb-0" id="tblLapTenaker">
+            <table class="table table-hover table-sm align-middle mb-0" id="tblLapTenaker">
                 <thead class="table-dark">
                     <tr>
                         <th width="35">#</th>

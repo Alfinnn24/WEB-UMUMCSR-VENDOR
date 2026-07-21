@@ -258,6 +258,18 @@
                                 <i class="bx bxs-info-circle"></i>Informasi
                             </a>
                         </li>
+                        <li>
+                            <a href="{{ route('admin.peraturan.index') }}" class="nav-ajax"
+                                data-url="{{ route('admin.peraturan.index') }}" data-title="Peraturan Perusahaan">
+                                <i class="bx bxs-book"></i>Peraturan Perusahaan
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.bpjs-monitoring.index') }}" class="nav-ajax"
+                                data-url="{{ route('admin.bpjs-monitoring.index') }}" data-title="Bukti Kepesertaan BPJS">
+                                <i class="bx bxs-shield"></i>Bukti Kepesertaan BPJS
+                            </a>
+                        </li>
                     </ul>
                 </li>
 

@@ -106,7 +106,7 @@
 
         <div class="table-responsive">
             <table class="table table-hover table-sm align-middle mb-0" id="tblRingReport">
-                <thead class="table-light">
+                <thead class="table-dark">
                     <tr>
                         <th width="40">#</th>
                         <th>Nama Perusahaan</th>
